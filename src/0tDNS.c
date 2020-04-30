@@ -7,6 +7,13 @@
 
 #define DEFAULT_DEBUGLEVEL 0
 
+/*
+ * This is the path in Debian - in other systems it will be different
+ * and we will need to either somehow find it dynamically or get the path
+ * from the user.
+ */
+#define CA_BUNDLE_FILE "/etc/ssl/certs/ca-certificates.crt"
+
 /* In the long run me might rename this file to somewhere else... */
 #define TRUST_ANCHOR_FILE "./root.key"
 
@@ -77,24 +84,33 @@ struct ub_ctx *ztdns_create_ub_context(enum resolution_mode mode,
 	}
 
 	if (mode == RECURSIVE) {
-		rc = ub_ctx_set_fwd(ctx, resolver_addr);
 		error_message_format = "Couldn't set forward server: %s\n";
+		rc = ub_ctx_set_fwd(ctx, resolver_addr);
+		if (rc)
+			goto out;
+		/* Make DNS over TLS mandatory for recursive resolvers */
+		/* TODO tls not working for some reason - this has to be fixed */
+		/* error_message_format = "Couldn't enable DNS over TLS: %s\n"; */
+		/* rc = ub_ctx_set_tls(ctx, 1); */
+		/* if (rc) */
+		/* 	goto out; */
+		/* rc = ub_ctx_set_option(ctx, "tls-cert-bundle:", CA_BUNDLE_FILE); */
 	} else if (mode == FULL) {
 		/* TODO use root_hints here for better reliability */
 		/* For iterative queries we use DNSSEC if possible */
-		rc = ub_ctx_add_ta_autr(ctx, TRUST_ANCHOR_FILE);
 		error_message_format = "Couldn't set trust anchors: %s\n";
+		rc = ub_ctx_add_ta_autr(ctx, TRUST_ANCHOR_FILE);
 	} else /* if (mode == RESOLV_CONF) */ {
-		/* NULL can be passed to use system's default resolv.conf*/
-		rc = ub_ctx_resolvconf(ctx, NULL);
+		/* NULL can be passed to use system's default resolv.conf */
 		error_message_format = "Couldn't use system resolv.conf: %s\n";
+		rc = ub_ctx_resolvconf(ctx, NULL);
 	}
 
 	if (rc)
 		goto out;
 
-	rc = ub_ctx_debuglevel(ctx, debuglevel);
 	error_message_format = "Couldn't set debuglevel: %s\n";
+	rc = ub_ctx_debuglevel(ctx, debuglevel);
 
 out:
 	if (rc) {
