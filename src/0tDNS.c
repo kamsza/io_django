@@ -55,7 +55,7 @@ void examine_result(const char *query, struct ub_result *result)
 
         if(!result->havedata)
 		return;
-
+	
         num = 0;
         for(i=0; result->data[i]; i++) {
                 printf("result data element %d has length %d\n",
@@ -184,8 +184,10 @@ struct ztdns_instance {
  * Hardcoded recursive DNS servers. A temporary solution - those should
  * ideally by obtained from command line or configuration file.
  */
-const char *resolvers_addresses[] = {"8.8.8.8", "8.8.4.4", "1.1.1.1"};
-const char *resolvers_names[] = {"google", "google", "cloudflare"};
+const char *resolvers_addresses[] = {"8.8.8.8", "8.8.4.4",
+				     "1.1.1.1", "127.0.0.1"};
+const char *resolvers_names[] = {"google", "google",
+				 "cloudflare", "localhost"};
 #define RESOLVERS_COUNT 4
 
 int main(int argc, char** argv)
