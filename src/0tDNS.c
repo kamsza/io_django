@@ -53,6 +53,9 @@ void examine_result(const char *query, struct ub_result *result)
 
         printf("DNS rcode: %d\n", result->rcode);
 
+        if(!result->havedata)
+		return;
+
         num = 0;
         for(i=0; result->data[i]; i++) {
                 printf("result data element %d has length %d\n",
@@ -130,9 +133,10 @@ void ztdns_try_resolve(struct ub_ctx *ctx, const char *name) {
 			1 /* CLASS IN (internet) */, &result);
         if(rc)
                 printf("resolve error: %s\n", ub_strerror(rc));
-	else
+	else {
 		examine_result(name, result);
-	ub_resolve_free(result);
+		ub_resolve_free(result);
+	}
 }
 
 struct ztdns_resolver {
@@ -182,7 +186,7 @@ struct ztdns_instance {
  */
 const char *resolvers_addresses[] = {"8.8.8.8", "8.8.4.4", "1.1.1.1"};
 const char *resolvers_names[] = {"google", "google", "cloudflare"};
-#define RESOLVERS_COUNT 3
+#define RESOLVERS_COUNT 4
 
 int main(int argc, char** argv)
 {
