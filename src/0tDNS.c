@@ -99,7 +99,7 @@ int main(int argc, char** argv)
 
 	if (!ctx_google1 || !ctx_google2 || !ctx_cloudflare) {
 		rc = EXIT_FAILURE;
-		goto abort;
+		goto out;
 	}
 
 	printf("* VIA GOOGLE (8.8.8.8)\n");
@@ -109,7 +109,7 @@ int main(int argc, char** argv)
 	printf("* VIA CLOUDFLARE (1.1.1.1)\n");
 	ztdns_try_resolve(ctx_cloudflare, argv[1]);
 
-abort:
+out:
         if (ctx_google1)
 		ub_ctx_delete(ctx_google1);
         if (ctx_google2)
