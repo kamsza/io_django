@@ -10,6 +10,8 @@
 /* In the long run me might rename this file to somewhere else... */
 #define TRUST_ANCHOR_FILE "./root.key"
 
+#define MALLOC_FAILURE_STRING "Couldn't allocate memory.\n"
+
 /* examine the result structure in detail */
 void examine_result(const char *query, struct ub_result *result)
 {
@@ -61,7 +63,6 @@ enum resolution_mode {
 	RESOLV_CONF
 };
 
-/* Pass NULL to use resolver from /etc/resolv.conf */
 struct ub_ctx *ztdns_create_ub_context(enum resolution_mode mode,
 				       const char *resolver_addr,
 				       int debuglevel) {
@@ -118,59 +119,111 @@ void ztdns_try_resolve(struct ub_ctx *ctx, const char *name) {
 	ub_resolve_free(result);
 }
 
-int main(int argc, char** argv)
-{
-        struct ub_ctx
-		*ctx_google1 = NULL,
-		*ctx_google2 = NULL,
-		*ctx_cloudflare = NULL,
-		*ctx_full = NULL,
-		*ctx_resolv_conf = NULL;
-        int rc = EXIT_SUCCESS;
+struct ztdns_resolver {
+	struct ub_ctx *ctx;
+	const char *name; /* arbitrary name - only used for printing to user */
+	const char *address; /* IP addr in dot notation stored as string */
+	struct ztdns_resolver *next;
+};
 
-        if(argc != 2) {
-                printf("usage: <hostname>\n");
-                return EXIT_FAILURE;
-        }
-
-	ctx_google1 = ztdns_create_ub_context(RECURSIVE, "8.8.8.8",
-					      DEFAULT_DEBUGLEVEL);
-	ctx_google2 = ztdns_create_ub_context(RECURSIVE, "8.8.4.4",
-					      DEFAULT_DEBUGLEVEL);
-	ctx_cloudflare = ztdns_create_ub_context(RECURSIVE, "1.1.1.1",
-						 DEFAULT_DEBUGLEVEL);
-	ctx_full = ztdns_create_ub_context(FULL, NULL, DEFAULT_DEBUGLEVEL);
-	ctx_resolv_conf = ztdns_create_ub_context(RESOLV_CONF, NULL,
-						  DEFAULT_DEBUGLEVEL);
-
-	if (!ctx_google1 || !ctx_google2 || !ctx_cloudflare ||
-	    !ctx_full || !ctx_resolv_conf) {
-		rc = EXIT_FAILURE;
-		goto out;
+struct ztdns_resolver *ztdns_create_recursive_resolver(const char *name,
+						       const char *address,
+						       int debuglevel) {
+	struct ztdns_resolver *resolver;
+	resolver = malloc(sizeof(struct ztdns_resolver));
+	if (!resolver) {
+		fprintf(stderr, MALLOC_FAILURE_STRING);
+		return NULL;
 	}
 
-	printf("* VIA GOOGLE (8.8.8.8)\n");
-	ztdns_try_resolve(ctx_google1, argv[1]);
-	printf("* VIA GOOGLE (8.8.4.4)\n");
-	ztdns_try_resolve(ctx_google2, argv[1]);
-	printf("* VIA CLOUDFLARE (1.1.1.1)\n");
-	ztdns_try_resolve(ctx_cloudflare, argv[1]);
+	resolver->ctx = ztdns_create_ub_context(RECURSIVE, address, debuglevel);
+	if (!resolver->ctx)
+		goto out_err;
+
+	resolver->name = name;
+	resolver->address = address;
+	resolver->next = NULL;
+	return resolver;
+
+out_err:
+	free(resolver);
+	return NULL;
+}
+
+void ztdns_delete_recursive_resolver(struct ztdns_resolver *resolver) {
+	ub_ctx_delete(resolver->ctx);
+	free(resolver);
+}
+
+struct ztdns_instance {
+        struct ub_ctx *ctx_resolv_conf, *ctx_full;
+	struct ztdns_resolver *recursive_resolvers;
+};
+
+/*
+ * Hardcoded recursive DNS servers. A temporary solution - those should
+ * ideally by obtained from command line or configuration file.
+ */
+const char *resolvers_addresses[] = {"8.8.8.8", "8.8.4.4", "1.1.1.1"};
+const char *resolvers_names[] = {"google", "google", "cloudflare"};
+#define RESOLVERS_COUNT 3
+
+int main(int argc, char** argv)
+{
+	struct ztdns_instance ztdns;
+	int rc = EXIT_FAILURE;
+	int i;
+	struct ztdns_resolver *tmp;
+
+        if(argc != 2) {
+                printf("usage: %s HOSTNAME\n", argv[0]);
+                goto out_err;
+        }
+
+	ztdns.ctx_full =
+		ztdns_create_ub_context(FULL, NULL, DEFAULT_DEBUGLEVEL);
+	if (!ztdns.ctx_full)
+		goto out_err;
+
+	ztdns.ctx_resolv_conf =
+		ztdns_create_ub_context(RESOLV_CONF, NULL, DEFAULT_DEBUGLEVEL);
+	if (!ztdns.ctx_resolv_conf)
+		goto out_err_cleanup_ctx_full;
+
+	ztdns.recursive_resolvers = NULL;
+	for (i = 0; i < RESOLVERS_COUNT; i++) {
+		tmp = ztdns_create_recursive_resolver(resolvers_names[i],
+						      resolvers_addresses[i],
+						      DEFAULT_DEBUGLEVEL);
+		if (!tmp)
+			goto out_err_cleanup_recursive_resolvers;
+
+		tmp->next = ztdns.recursive_resolvers;
+		ztdns.recursive_resolvers = tmp;
+	}
+
 	printf("* FULL RESOLUTION\n");
-	ztdns_try_resolve(ctx_full, argv[1]);
+	ztdns_try_resolve(ztdns.ctx_full, argv[1]);
 	printf("* USING RESOLVER FROM resolv.conf\n");
-	ztdns_try_resolve(ctx_resolv_conf, argv[1]);
+	ztdns_try_resolve(ztdns.ctx_resolv_conf, argv[1]);
 
-out:
-        if (ctx_google1)
-		ub_ctx_delete(ctx_google1);
-        if (ctx_google2)
-		ub_ctx_delete(ctx_google2);
-        if (ctx_cloudflare)
-		ub_ctx_delete(ctx_cloudflare);
-        if (ctx_full)
-		ub_ctx_delete(ctx_full);
-	if (ctx_resolv_conf)
-		ub_ctx_delete(ctx_resolv_conf);
+	for (tmp = ztdns.recursive_resolvers; tmp; tmp = tmp->next) {
+		printf("* VIA %s (%s)\n", tmp->name, tmp->address);
+		ztdns_try_resolve(tmp->ctx, argv[1]);
+	}
 
+	rc = EXIT_SUCCESS;
+
+out_err_cleanup_recursive_resolvers:
+	while (ztdns.recursive_resolvers) {
+		tmp = ztdns.recursive_resolvers->next;
+		ztdns_delete_recursive_resolver(ztdns.recursive_resolvers);
+		ztdns.recursive_resolvers = tmp;
+	}
+
+	ub_ctx_delete(ztdns.ctx_resolv_conf);
+out_err_cleanup_ctx_full:
+	ub_ctx_delete(ztdns.ctx_full);
+out_err:
 	return rc;
 }
