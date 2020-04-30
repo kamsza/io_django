@@ -50,7 +50,15 @@ void examine_result(const char *query, struct ub_result *result)
         printf("result has %d data element(s)\n", num);
 }
 
-struct ub_ctx *ztdns_create_context_with_resolver(const char *resolver_addr) {
+enum resolution_mode {
+	RECURSIVE,
+	FULL,
+	RESOLV_CONF
+};
+
+/* Pass NULL to use resolver from /etc/resolv.conf */
+struct ub_ctx *ztdns_create_ub_context(enum resolution_mode mode,
+				       const char *resolver_addr) {
 	int rc;
 	struct ub_ctx* ctx;
         ctx = ub_ctx_create();
@@ -58,13 +66,31 @@ struct ub_ctx *ztdns_create_context_with_resolver(const char *resolver_addr) {
 		fprintf(stderr, "Couldn't create libunbound context.\n");
 		return NULL;
 	}
-	rc = ub_ctx_set_fwd(ctx, resolver_addr);
-	if (rc) {
-                fprintf(stderr, "Couldn't set forward server: %s\n",
-			ub_strerror(rc));
-		return NULL;
+
+	if (mode == RECURSIVE) {
+		rc = ub_ctx_set_fwd(ctx, resolver_addr);
+		if (rc) {
+			fprintf(stderr, "Couldn't set forward server: %s\n",
+				ub_strerror(rc));
+			goto out_error;
+		}
+	} else if (mode == FULL) {
+		/* TODO use root_hints here for better reliability */
+	} else /* if (mode == RESOLV_CONF) */ {
+		/* NULL can be passed for system's default resolv.conf*/
+		rc = ub_ctx_resolvconf(ctx, NULL);
+		if (rc) {
+			fprintf(stderr, "Couldn't use system resolv.conf: %s\n",
+				ub_strerror(rc));
+			goto out_error;
+		}
+
 	}
+
 	return ctx;
+out_error:
+	ub_ctx_delete(ctx);
+	return NULL;
 }
 
 void ztdns_try_resolve(struct ub_ctx *ctx, const char *name) {
@@ -85,7 +111,9 @@ int main(int argc, char** argv)
         struct ub_ctx
 		*ctx_google1 = NULL,
 		*ctx_google2 = NULL,
-		*ctx_cloudflare = NULL;
+		*ctx_cloudflare = NULL,
+		*ctx_full = NULL,
+		*ctx_resolv_conf = NULL;
         int rc = EXIT_SUCCESS;
 
         if(argc != 2) {
@@ -93,11 +121,14 @@ int main(int argc, char** argv)
                 return EXIT_FAILURE;
         }
 
-	ctx_google1 = ztdns_create_context_with_resolver("8.8.8.8");
-	ctx_google2 = ztdns_create_context_with_resolver("8.8.4.4");
-	ctx_cloudflare = ztdns_create_context_with_resolver("1.1.1.1");
+	ctx_google1 = ztdns_create_ub_context(RECURSIVE, "8.8.8.8");
+	ctx_google2 = ztdns_create_ub_context(RECURSIVE, "8.8.4.4");
+	ctx_cloudflare = ztdns_create_ub_context(RECURSIVE, "1.1.1.1");
+	ctx_full = ztdns_create_ub_context(FULL, NULL);
+	ctx_resolv_conf = ztdns_create_ub_context(RESOLV_CONF, NULL);
 
-	if (!ctx_google1 || !ctx_google2 || !ctx_cloudflare) {
+	if (!ctx_google1 || !ctx_google2 || !ctx_cloudflare ||
+	    !ctx_full || !ctx_resolv_conf) {
 		rc = EXIT_FAILURE;
 		goto out;
 	}
@@ -108,6 +139,10 @@ int main(int argc, char** argv)
 	ztdns_try_resolve(ctx_google2, argv[1]);
 	printf("* VIA CLOUDFLARE (1.1.1.1)\n");
 	ztdns_try_resolve(ctx_cloudflare, argv[1]);
+	printf("* FULL RESOLUTION\n");
+	ztdns_try_resolve(ctx_full, argv[1]);
+	printf("* USING RESOLVER FROM resolv.conf\n");
+	ztdns_try_resolve(ctx_resolv_conf, argv[1]);
 
 out:
         if (ctx_google1)
@@ -116,6 +151,10 @@ out:
 		ub_ctx_delete(ctx_google2);
         if (ctx_cloudflare)
 		ub_ctx_delete(ctx_cloudflare);
+        if (ctx_full)
+		ub_ctx_delete(ctx_full);
+	if (ctx_resolv_conf)
+		ub_ctx_delete(ctx_resolv_conf);
 
 	return rc;
 }
