@@ -5,6 +5,11 @@
 #include <arpa/inet.h>
 #include <unbound.h>
 
+#define DEFAULT_DEBUGLEVEL 0
+
+/* In the long run me might rename this file to somewhere else... */
+#define TRUST_ANCHOR_FILE "./root.key"
+
 /* examine the result structure in detail */
 void examine_result(const char *query, struct ub_result *result)
 {
@@ -58,9 +63,12 @@ enum resolution_mode {
 
 /* Pass NULL to use resolver from /etc/resolv.conf */
 struct ub_ctx *ztdns_create_ub_context(enum resolution_mode mode,
-				       const char *resolver_addr) {
+				       const char *resolver_addr,
+				       int debuglevel) {
 	int rc;
 	struct ub_ctx* ctx;
+	const char *error_message_format;
+
         ctx = ub_ctx_create();
         if (!ctx) {
 		fprintf(stderr, "Couldn't create libunbound context.\n");
@@ -69,28 +77,32 @@ struct ub_ctx *ztdns_create_ub_context(enum resolution_mode mode,
 
 	if (mode == RECURSIVE) {
 		rc = ub_ctx_set_fwd(ctx, resolver_addr);
-		if (rc) {
-			fprintf(stderr, "Couldn't set forward server: %s\n",
-				ub_strerror(rc));
-			goto out_error;
-		}
+		error_message_format = "Couldn't set forward server: %s\n";
 	} else if (mode == FULL) {
 		/* TODO use root_hints here for better reliability */
+		/* For iterative queries we use DNSSEC if possible */
+		rc = ub_ctx_add_ta_autr(ctx, TRUST_ANCHOR_FILE);
+		error_message_format = "Couldn't set trust anchors: %s\n";
 	} else /* if (mode == RESOLV_CONF) */ {
-		/* NULL can be passed for system's default resolv.conf*/
+		/* NULL can be passed to use system's default resolv.conf*/
 		rc = ub_ctx_resolvconf(ctx, NULL);
-		if (rc) {
-			fprintf(stderr, "Couldn't use system resolv.conf: %s\n",
-				ub_strerror(rc));
-			goto out_error;
-		}
+		error_message_format = "Couldn't use system resolv.conf: %s\n";
+	}
 
+	if (rc)
+		goto out;
+
+	rc = ub_ctx_debuglevel(ctx, debuglevel);
+	error_message_format = "Couldn't set debuglevel: %s\n";
+
+out:
+	if (rc) {
+		fprintf(stderr, error_message_format, ub_strerror(rc));
+		ub_ctx_delete(ctx);
+		return NULL;
 	}
 
 	return ctx;
-out_error:
-	ub_ctx_delete(ctx);
-	return NULL;
 }
 
 void ztdns_try_resolve(struct ub_ctx *ctx, const char *name) {
@@ -121,11 +133,15 @@ int main(int argc, char** argv)
                 return EXIT_FAILURE;
         }
 
-	ctx_google1 = ztdns_create_ub_context(RECURSIVE, "8.8.8.8");
-	ctx_google2 = ztdns_create_ub_context(RECURSIVE, "8.8.4.4");
-	ctx_cloudflare = ztdns_create_ub_context(RECURSIVE, "1.1.1.1");
-	ctx_full = ztdns_create_ub_context(FULL, NULL);
-	ctx_resolv_conf = ztdns_create_ub_context(RESOLV_CONF, NULL);
+	ctx_google1 = ztdns_create_ub_context(RECURSIVE, "8.8.8.8",
+					      DEFAULT_DEBUGLEVEL);
+	ctx_google2 = ztdns_create_ub_context(RECURSIVE, "8.8.4.4",
+					      DEFAULT_DEBUGLEVEL);
+	ctx_cloudflare = ztdns_create_ub_context(RECURSIVE, "1.1.1.1",
+						 DEFAULT_DEBUGLEVEL);
+	ctx_full = ztdns_create_ub_context(FULL, NULL, DEFAULT_DEBUGLEVEL);
+	ctx_resolv_conf = ztdns_create_ub_context(RESOLV_CONF, NULL,
+						  DEFAULT_DEBUGLEVEL);
 
 	if (!ctx_google1 || !ctx_google2 || !ctx_cloudflare ||
 	    !ctx_full || !ctx_resolv_conf) {
