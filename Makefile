@@ -7,16 +7,16 @@ CFLAGS = -std=c99 -Wall -Werror
 build/0tDNS.o : src/0tDNS.c | build
 	gcc $(CFLAGS) $^ -c -o $@
 
-receive : build/receive.o
+receive_respond : build/receive_respond.o
 	$(CC) $^ -lldns -o $@
 
-build/receive.o : src/receive.c | build
+build/receive_respond.o : src/receive_respond.c | build
 	gcc $(CFLAGS) $^ -c -o $@
 
 build :
 	mkdir build
 
 clean :
-	-rm -r build 0tDNS receive
+	-rm -r build 0tDNS receive_respond
 
 .PHONY : clean
