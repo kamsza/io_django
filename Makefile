@@ -16,6 +16,8 @@ build/receive_respond.o : src/receive_respond.c | build
 build :
 	mkdir build
 
+all : 0tDNS receive_respond
+
 clean :
 	-rm -r build 0tDNS receive_respond
 
