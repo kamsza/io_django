@@ -75,7 +75,7 @@ void examine_result(const char *query, struct ub_result *result)
 
         if(!result->havedata)
 		return;
-	
+
         num = 0;
         for(i=0; result->data[i]; i++) {
                 printf("result data element %d has length %d\n",
@@ -210,29 +210,32 @@ const char *resolvers_names[] = {"google", "google",
 				 "cloudflare", "localhost"};
 #define RESOLVERS_COUNT 4
 
-int main(int argc, char** argv)
+struct ztdns_instance *ztdns_create_instance(int argc, char **argv)
 {
-	struct ztdns_instance ztdns;
-	int rc = EXIT_FAILURE;
+	struct ztdns_instance *ztdns;
 	int i;
 	struct ztdns_resolver *tmp;
 
-        if(argc != 2) {
-                printf("usage: %s HOSTNAME\n", argv[0]);
-                goto out_err;
-        }
+	ztdns = malloc(sizeof(struct ztdns_instance));
+	if (!ztdns)
+		return NULL;
 
-	ztdns.ctx_full =
+	/* Create context for performing full resolution */
+	ztdns->ctx_full =
 		ztdns_create_ub_context(FULL, NULL, DEFAULT_DEBUGLEVEL);
-	if (!ztdns.ctx_full)
-		goto out_err;
+	if (!ztdns->ctx_full)
+		goto out_err_cleanup_instance;
 
-	ztdns.ctx_resolv_conf =
+	/* Create context for performing resolution with default resolver */
+	ztdns->ctx_resolv_conf =
 		ztdns_create_ub_context(RESOLV_CONF, NULL, DEFAULT_DEBUGLEVEL);
-	if (!ztdns.ctx_resolv_conf)
+	if (!ztdns->ctx_resolv_conf)
 		goto out_err_cleanup_ctx_full;
 
-	ztdns.recursive_resolvers = NULL;
+	/* Create contexts for performing resolution with resolvers provided
+	 *  by user (well, hardcoded ones in this case)
+	 */
+	ztdns->recursive_resolvers = NULL;
 	for (i = 0; i < RESOLVERS_COUNT; i++) {
 		tmp = ztdns_create_recursive_resolver(resolvers_names[i],
 						      resolvers_addresses[i],
@@ -240,32 +243,63 @@ int main(int argc, char** argv)
 		if (!tmp)
 			goto out_err_cleanup_recursive_resolvers;
 
-		tmp->next = ztdns.recursive_resolvers;
-		ztdns.recursive_resolvers = tmp;
+		tmp->next = ztdns->recursive_resolvers;
+		ztdns->recursive_resolvers = tmp;
 	}
 
-	printf("* FULL RESOLUTION\n");
-	ztdns_try_resolve(ztdns.ctx_full, argv[1]);
-	printf("* USING RESOLVER FROM resolv.conf\n");
-	ztdns_try_resolve(ztdns.ctx_resolv_conf, argv[1]);
-
-	for (tmp = ztdns.recursive_resolvers; tmp; tmp = tmp->next) {
-		printf("* VIA %s (%s)\n", tmp->name, tmp->address);
-		ztdns_try_resolve(tmp->ctx, argv[1]);
-	}
-
-	rc = EXIT_SUCCESS;
+	return ztdns;
 
 out_err_cleanup_recursive_resolvers:
-	while (ztdns.recursive_resolvers) {
-		tmp = ztdns.recursive_resolvers->next;
-		ztdns_delete_recursive_resolver(ztdns.recursive_resolvers);
-		ztdns.recursive_resolvers = tmp;
+	while (ztdns->recursive_resolvers) {
+		tmp = ztdns->recursive_resolvers->next;
+		ztdns_delete_recursive_resolver(ztdns->recursive_resolvers);
+		ztdns->recursive_resolvers = tmp;
 	}
 
-	ub_ctx_delete(ztdns.ctx_resolv_conf);
+	ub_ctx_delete(ztdns->ctx_resolv_conf);
 out_err_cleanup_ctx_full:
-	ub_ctx_delete(ztdns.ctx_full);
-out_err:
-	return rc;
+	ub_ctx_delete(ztdns->ctx_full);
+out_err_cleanup_instance:
+	free(ztdns);
+	return NULL;
+}
+
+void ztdns_delete_instance(struct ztdns_instance *ztdns)
+{
+	struct ztdns_resolver *tmp;
+
+	while (ztdns->recursive_resolvers) {
+		tmp = ztdns->recursive_resolvers->next;
+		ztdns_delete_recursive_resolver(ztdns->recursive_resolvers);
+		ztdns->recursive_resolvers = tmp;
+	}
+
+	ub_ctx_delete(ztdns->ctx_resolv_conf);
+	ub_ctx_delete(ztdns->ctx_full);
+	free(ztdns);
+}
+
+int main(int argc, char** argv)
+{
+	struct ztdns_instance *ztdns;
+	struct ztdns_resolver *tmp;
+	const char *queried_name = "google.com";
+
+	ztdns = ztdns_create_instance(argc, argv);
+	if (!ztdns)
+		return EXIT_FAILURE;
+
+	printf("* FULL RESOLUTION\n");
+	ztdns_try_resolve(ztdns->ctx_full, queried_name);
+	printf("* USING RESOLVER FROM resolv.conf\n");
+	ztdns_try_resolve(ztdns->ctx_resolv_conf, queried_name);
+
+	for (tmp = ztdns->recursive_resolvers; tmp; tmp = tmp->next) {
+		printf("* VIA %s (%s)\n", tmp->name, tmp->address);
+		ztdns_try_resolve(tmp->ctx, queried_name);
+	}
+
+	ztdns_delete_instance(ztdns);
+
+	return EXIT_SUCCESS;
 }
