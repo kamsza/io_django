@@ -1,5 +1,5 @@
 CC ?= gcc
-CFLAGS = -std=c99 -Wall -Werror
+CFLAGS = -std=c99 -Wall -Werror -I include
 
 0tDNS : build/0tDNS.o
 	$(CC) $^ -lunbound -o $@

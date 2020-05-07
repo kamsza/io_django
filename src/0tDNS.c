@@ -26,6 +26,11 @@
 #include <stdbool.h>
 #include <unbound.h>
 
+#include "log.h"
+
+/* To specify when creating unbound context - has nothing to do with
+ * out logging facility
+ */
 #define DEFAULT_DEBUGLEVEL 0
 
 /*
@@ -234,8 +239,13 @@ struct ztdns_instance *ztdns_create_instance(int argc, char **argv)
 	struct ztdns_resolver *tmp;
 
 	ztdns = malloc(sizeof(struct ztdns_instance));
-	if (!ztdns)
+	if (!ztdns) {
+		/* This is an example of how rest of the code shold be
+		 * written/rewritten to use our logging facility.
+		 */
+		ztdns_log(ERROR, "No memory, no fun :(\n");
 		return NULL;
+	}
 
 	/* Create context for performing full resolution */
 	ztdns->ctx_full =
