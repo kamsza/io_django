@@ -3,15 +3,13 @@
 
 #include <stdio.h>
 
-#define ERROR 1
-#define WARN  2
-#define INFO  3
-#define DEBUG 4
-
-/* This function will change later - it's just a "mock", so that every1 can
- * already write code with ztdns_log() :)
- * Use like ztdns_log(DEBUG, "something wrong happened! %s", errorstring);
+/* These functions will change later - it's just a "mock", so that every1 can
+ * already write code with ztdns_info() :)
+ * Use like ztdns_info("something wrong happened! %s", errorstring);
  */
-#define ztdns_log(level, printfargs...) printf(printfargs)
+#define ztdns_debug(printfargs...) printf(printfargs)
+#define ztdns_info(printfargs...) printf(printfargs)
+#define ztdns_warn(printfargs...) printf(printfargs)
+#define ztdns_error(printfargs...) printf(printfargs)
 
 #endif /* ZTDNS_LOG_H */

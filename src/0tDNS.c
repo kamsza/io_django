@@ -243,7 +243,7 @@ struct ztdns_instance *ztdns_create_instance(int argc, char **argv)
 		/* This is an example of how rest of the code shold be
 		 * written/rewritten to use our logging facility.
 		 */
-		ztdns_log(ERROR, "No memory, no fun :(\n");
+		ztdns_error("No memory, no fun :(\n");
 		return NULL;
 	}
 
