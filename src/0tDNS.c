@@ -23,6 +23,7 @@
 #include <string.h>
 #include <errno.h>
 #include <arpa/inet.h>
+#include <stdbool.h>
 #include <unbound.h>
 
 #define DEFAULT_DEBUGLEVEL 0
@@ -163,12 +164,23 @@ struct ztdns_resolver {
 	struct ub_ctx *ctx;
 	const char *name; /* arbitrary name - only used for printing to user */
 	const char *address; /* IP addr in dot notation stored as string */
+	/* Compatible answer must be returned by resolvers with their
+	 * trust levels summing to at least 100 - otherwise the answer is
+	 * considered unreliable.
+	 */
+	uint8_t trust_level;
+	/* Whether we want ztdns to report when this resolver gives answer,
+	 * that is not confirmed by others (i.e. trust levels sum for this
+	 * answer doesn't reach 100).
+	 */
+	bool report_errors;
 	struct ztdns_resolver *next;
 };
 
-struct ztdns_resolver *ztdns_create_recursive_resolver(const char *name,
-						       const char *address,
-						       int debuglevel) {
+struct ztdns_resolver *ztdns_create_recursive_resolver
+(const char *name, const char *address, uint8_t trust_level, bool report_errors,
+ int debuglevel)
+{
 	struct ztdns_resolver *resolver;
 	resolver = malloc(sizeof(struct ztdns_resolver));
 	if (!resolver) {
@@ -182,6 +194,8 @@ struct ztdns_resolver *ztdns_create_recursive_resolver(const char *name,
 
 	resolver->name = name;
 	resolver->address = address;
+	resolver->trust_level = trust_level;
+	resolver->report_errors = report_errors;
 	resolver->next = NULL;
 	return resolver;
 
@@ -208,6 +222,9 @@ const char *resolvers_addresses[] = {"8.8.8.8", "8.8.4.4",
 				     "1.1.1.1", "127.0.0.1"};
 const char *resolvers_names[] = {"google", "google",
 				 "cloudflare", "localhost"};
+uint8_t resolvers_trust_levels[] = {40, 40, 80, 20};
+uint8_t resolvers_report_errors[] = {false, false, false, true};
+
 #define RESOLVERS_COUNT 4
 
 struct ztdns_instance *ztdns_create_instance(int argc, char **argv)
@@ -237,9 +254,10 @@ struct ztdns_instance *ztdns_create_instance(int argc, char **argv)
 	 */
 	ztdns->recursive_resolvers = NULL;
 	for (i = 0; i < RESOLVERS_COUNT; i++) {
-		tmp = ztdns_create_recursive_resolver(resolvers_names[i],
-						      resolvers_addresses[i],
-						      DEFAULT_DEBUGLEVEL);
+		tmp = ztdns_create_recursive_resolver
+			(resolvers_names[i], resolvers_addresses[i],
+			 resolvers_trust_levels[i], resolvers_report_errors[i],
+			 DEFAULT_DEBUGLEVEL);
 		if (!tmp)
 			goto out_err_cleanup_recursive_resolvers;
 
