@@ -24,9 +24,22 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include <stdbool.h>
+
 #include <unbound.h>
+#include <ldns/ldns.h>
 
 #include "log.h"
+
+#define LISTEN_PORT 53
+#define IPADDR_BUFLEN 50
+
+/* From receive_respond.c */
+int udp_bind(int, uint16_t);
+int socket_create(uint16_t);
+ldns_pkt *receive_and_print(int);
+int respond_query(int, const char*, const char*, ldns_rr*, uint16_t);
+char *hostnamefrompkt(ldns_pkt*, ldns_rr**);
+	
 
 /* To specify when creating unbound context - has nothing to do with
  * out logging facility
@@ -46,10 +59,15 @@
 #define MALLOC_FAILURE_STRING "Couldn't allocate memory.\n"
 
 /* examine the result structure in detail */
-void examine_result(const char *query, struct ub_result *result)
+const char *examine_result(const char *query, struct ub_result *result,
+			   char *ipaddr_buf)
 {
         int i;
         int num;
+	char buf[IPADDR_BUFLEN];
+	char *ipaddr_buf_used;
+
+	ipaddr_buf_used = ipaddr_buf ? ipaddr_buf : buf;
 
         printf("The query is for: %s\n", query);
         printf("The result has:\n");
@@ -80,17 +98,20 @@ void examine_result(const char *query, struct ub_result *result)
         printf("DNS rcode: %d\n", result->rcode);
 
         if(!result->havedata)
-		return;
+		return NULL;
 
         num = 0;
         for(i=0; result->data[i]; i++) {
                 printf("result data element %d has length %d\n",
 		       i, result->len[i]);
-                printf("result data element %d is: %s\n",
-		       i, inet_ntoa(*(struct in_addr*)result->data[i]));
+                printf("result data element %d is: %s\n", i,
+		       inet_ntop(AF_INET, (struct in_addr*) result->data[i],
+				 ipaddr_buf_used, IPADDR_BUFLEN));
                 num++;
         }
         printf("result has %d data element(s)\n", num);
+
+	return ipaddr_buf;
 }
 
 enum resolution_mode {
@@ -101,7 +122,8 @@ enum resolution_mode {
 
 struct ub_ctx *ztdns_create_ub_context(enum resolution_mode mode,
 				       const char *resolver_addr,
-				       int debuglevel) {
+				       int debuglevel)
+{
 	int rc;
 	struct ub_ctx* ctx;
 	const char *error_message_format;
@@ -151,18 +173,24 @@ out:
 	return ctx;
 }
 
-void ztdns_try_resolve(struct ub_ctx *ctx, const char *name) {
+const char *ztdns_try_resolve(struct ub_ctx *ctx, const char *name,
+			      char *ipaddr_buf)
+{
 	struct ub_result* result;
 	int rc;
+	const char *ipaddr = NULL;
+	
         rc = ub_resolve(ctx, name,
 			1 /* TYPE A (IPv4 address) */,
 			1 /* CLASS IN (internet) */, &result);
         if(rc)
                 printf("resolve error: %s\n", ub_strerror(rc));
 	else {
-		examine_result(name, result);
+		ipaddr = examine_result(name, result, ipaddr_buf);
 		ub_resolve_free(result);
 	}
+
+	return ipaddr;
 }
 
 struct ztdns_resolver {
@@ -209,7 +237,8 @@ out_err:
 	return NULL;
 }
 
-void ztdns_delete_recursive_resolver(struct ztdns_resolver *resolver) {
+void ztdns_delete_recursive_resolver(struct ztdns_resolver *resolver)
+{
 	ub_ctx_delete(resolver->ctx);
 	free(resolver);
 }
@@ -223,14 +252,12 @@ struct ztdns_instance {
  * Hardcoded recursive DNS servers. A temporary solution - those should
  * ideally by obtained from command line or configuration file.
  */
-const char *resolvers_addresses[] = {"8.8.8.8", "8.8.4.4",
-				     "1.1.1.1", "127.0.0.1"};
-const char *resolvers_names[] = {"google", "google",
-				 "cloudflare", "localhost"};
-uint8_t resolvers_trust_levels[] = {40, 40, 80, 20};
-uint8_t resolvers_report_errors[] = {false, false, false, true};
+const char *resolvers_addresses[] = {"8.8.8.8", "8.8.4.4", "1.1.1.1"};
+const char *resolvers_names[] = {"google", "google", "cloudflare"};
+uint8_t resolvers_trust_levels[] = {40, 40, 80};
+uint8_t resolvers_report_errors[] = {true, true, false};
 
-#define RESOLVERS_COUNT 4
+#define RESOLVERS_COUNT 3
 
 struct ztdns_instance *ztdns_create_instance(int argc, char **argv)
 {
@@ -307,27 +334,90 @@ void ztdns_delete_instance(struct ztdns_instance *ztdns)
 	free(ztdns);
 }
 
-int main(int argc, char** argv)
+const char *smart_resolve(struct ztdns_instance *ztdns,
+			  const char *queried_name,
+			  char ipaddr_buf[IPADDR_BUFLEN])
 {
-	struct ztdns_instance *ztdns;
 	struct ztdns_resolver *tmp;
-	const char *queried_name = "google.com";
-
-	ztdns = ztdns_create_instance(argc, argv);
-	if (!ztdns)
-		return EXIT_FAILURE;
-
+	
 	printf("* FULL RESOLUTION\n");
-	ztdns_try_resolve(ztdns->ctx_full, queried_name);
+	ztdns_try_resolve(ztdns->ctx_full, queried_name, ipaddr_buf);
 	printf("* USING RESOLVER FROM resolv.conf\n");
-	ztdns_try_resolve(ztdns->ctx_resolv_conf, queried_name);
+	ztdns_try_resolve(ztdns->ctx_resolv_conf, queried_name, NULL);
 
 	for (tmp = ztdns->recursive_resolvers; tmp; tmp = tmp->next) {
 		printf("* VIA %s (%s)\n", tmp->name, tmp->address);
-		ztdns_try_resolve(tmp->ctx, queried_name);
+		ztdns_try_resolve(tmp->ctx, queried_name, NULL);
 	}
 
+	return NULL;
+}
+
+int handle_query(struct ztdns_instance *ztdns, int socket)
+{
+	ldns_pkt *query;
+	ldns_rr  *query_rr;
+	uint16_t id;
+	int rc = 1;
+	char *queried_name;
+	char ipaddr[IPADDR_BUFLEN];
+	
+	query = receive_and_print(socket);
+	if (!query)
+		return 1;
+
+	queried_name = hostnamefrompkt(query, &query_rr);
+	if (!queried_name)
+		goto out_cleanup_query;
+
+	id = ldns_pkt_id(query);
+
+	smart_resolve(ztdns, queried_name, ipaddr); /* fill ipaddr[] */
+	rc = respond_query(socket, queried_name, ipaddr, query_rr, id);
+
+	free(queried_name);
+
+out_cleanup_query:
+	ldns_pkt_free(query);
+	return rc;
+}
+
+int main(int argc, char** argv)
+{
+	int rc = EXIT_FAILURE;
+	struct ztdns_instance *ztdns;
+	int socket;
+
+	if (geteuid()) {
+		ztdns_error("need root privileges\n");
+		return EXIT_FAILURE;
+	}
+
+	socket = socket_create(LISTEN_PORT);
+	if (socket < 0)
+		return EXIT_FAILURE;
+
+	ztdns = ztdns_create_instance(argc, argv);
+	if (!ztdns)
+		goto out_cleanup_socket;
+
+	while (1)
+		handle_query(ztdns, socket);
+
+	/* Later on we'll have some way of stopping the daemon - for now this
+	 * line is unreachable */
 	ztdns_delete_instance(ztdns);
 
-	return EXIT_SUCCESS;
+out_cleanup_socket:
+	close(socket);
+	return rc;
+	
+	/*
+	 * The adsuck program would additionally do many cool things in main(),
+	 * i.e. parse command line options, drop root privileges, setup signal
+	 * handlers, etc. We could incorporate some of this into our program
+	 * later. I omitted it for now for simplicity and to ease porting to
+	 * windoze if You guys want to do that (but don't count on me in this
+	 * matter).
+	 */
 }

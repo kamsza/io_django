@@ -29,7 +29,6 @@
 
 #define MAXLINE 256
 #define INBUF_SIZE 4096
-#define PORT 53
 
 struct sockaddr		paddr;
 socklen_t		plen = (socklen_t)sizeof(paddr);
@@ -177,7 +176,8 @@ done:
 }
 
 int
-spoofquery(int so, const char *hostname, ldns_rr *query_rr, u_int16_t id)
+respond_query(int so, const char *hostname, const char *ipaddr,
+	      ldns_rr *query_rr, uint16_t id)
 {
 	ldns_status		status;
 	ldns_rr_list		*answer_an = NULL;
@@ -190,7 +190,6 @@ spoofquery(int so, const char *hostname, ldns_rr *query_rr, u_int16_t id)
 	char			buf[MAXLINE * 2];
 	uint8_t			*outbuf = NULL;
 	int			rv = 1;
-	const char	        *ipaddr = "127.0.0.1";
 
 	/* answer section */
 	answer_an = ldns_rr_list_new();
@@ -321,51 +320,4 @@ unwind:
 		ldns_rr_list_free(answer_ad);
 
 	return (rv);
-}
-
-int handle_query(int so) {
-	ldns_pkt *query_pkt;
-	ldns_rr  *query_rr;
-	uint16_t id;
-	int rv = 1;
-	char *hostname;
-
-	query_pkt = receive_and_print(so);
-	if (!query_pkt)
-		return 1;
-
-	hostname = hostnamefrompkt(query_pkt, &query_rr);
-	if (!hostname)
-		goto out_cleanup_pkt;
-
-	id = ldns_pkt_id(query_pkt);
-
-	rv = spoofquery(so, hostname, query_rr, id);
-
-	free(hostname);
-
-out_cleanup_pkt:
-	ldns_pkt_free(query_pkt);
-	return rv;
-}
-
-int main(int argc, char **argv) {
-	int so;
-
-	if (geteuid())
-		errx(1, "need root privileges");
-
-	so = socket_create(PORT);
-
-	/*
-	 * The original adsuck program would additionally do many cool things
-	 * in main(), i.e. parse command line options, drop root privileges,
-	 * setup signal handlers, etc. We could incorporate some of this into
-	 * our program later. I omitted it for now for simplicity and to
-	 * ease porting to windoze if You guys want to do that (but don't
-	 * count on me in this matter).
-	 */
-
-	while (1)
-		handle_query(so);
 }
