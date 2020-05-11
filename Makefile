@@ -7,7 +7,7 @@ CFLAGS = -std=c99 -Wall -Werror -I include
 build/%.o : src/%.c | build
 	gcc $(CFLAGS) $^ -c -o $@
 
-ask_localhost : build/ask_localhost.o
+ask_resolver : build/ask_resolver.o
 	$(CC) $^ -lunbound -o $@
 
 build :
@@ -16,6 +16,6 @@ build :
 all : 0tDNS receive_respond
 
 clean :
-	-rm -r build 0tDNS ask_localhost
+	-rm -r build 0tDNS ask_resolver
 
 .PHONY : clean

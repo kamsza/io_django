@@ -74,7 +74,8 @@ void examine_result(const char *query, struct ub_result *result)
         printf("result has %d data element(s)\n", num);
 }
 
-struct ub_ctx *create_ub_context(int debuglevel) {
+struct ub_ctx *create_ub_context(char *forwarder_addr, int debuglevel)
+{
 	int rc;
 	struct ub_ctx* ctx;
 	char *error_message_format;
@@ -86,7 +87,7 @@ struct ub_ctx *create_ub_context(int debuglevel) {
 	}
 
 	error_message_format = "Couldn't set forwarder: %s\n";
-	rc = ub_ctx_set_fwd(ctx, "127.0.0.1");
+	rc = ub_ctx_set_fwd(ctx, forwarder_addr);
 	if (rc)
 		goto out;
 
@@ -103,7 +104,8 @@ out:
 	return ctx;
 }
 
-void ztdns_try_resolve(struct ub_ctx *ctx, const char *name) {
+void ztdns_try_resolve(struct ub_ctx *ctx, const char *name)
+{
 	struct ub_result* result;
 	int rc;
         rc = ub_resolve(ctx, name,
@@ -120,17 +122,17 @@ void ztdns_try_resolve(struct ub_ctx *ctx, const char *name) {
 int main(int argc, char** argv)
 {
 	struct ub_ctx *ctx;
-	
-	if (argc < 2) {
-		printf("Usage: %s DOMAINNAME\n", argv[0]);
+
+	if (argc != 3) {
+		printf("Usage: %s DNS_SERVER DOMAINNAME\n", argv[0]);
 		return EXIT_FAILURE;
 	}
 
-	ctx = create_ub_context(3);
+	ctx = create_ub_context(argv[1], 3);
 	if (!ctx)
 		return EXIT_FAILURE;
 
-	ztdns_try_resolve(ctx, argv[1]);
+	ztdns_try_resolve(ctx, argv[2]);
 
 	ub_ctx_delete(ctx);
 
