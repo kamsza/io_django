@@ -1,4 +1,74 @@
 {% extends "home_page/base.html" %}
+{%  load static %}
+
+{% block header %}
+    <link rel="stylesheet" type="text/css" href="{% static 'bootstrap.css' %}">
+
+
+    <style>
+      body {
+          padding-top: 3.5rem;
+      }
+
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+    </style>
+{% endblock %}
+
 {% block content %}
-    <h1> HOME PAGE </h1>
+    <main role="main">
+      <div class="mainpage">
+        <div class="container">
+          <h1 class="display-1">DNS checker</h1>
+          <h4 style="margin-top:20px; font-style: italic;">We care about your customers from around the world</h4>
+        </div>
+      </div>
+
+      <div class="container">
+        <!-- Example row of columns -->
+        <div class="row">
+          <div class="col-md-4">
+            <h2>About the problem</h2>
+            <p>DNS hijacking manipulates the transaction and makes users unaware of the servers that they are using during an internet session.
+            It is a malicious exploit where the users are redirected with the help of a rogue DNS server that changes the IPs address of the redirected internet user. </p>
+          </div>
+          <div class="col-md-4">
+            <h2>About us</h2>
+            <p>Think about it, the DNS server is compromised, the IP of your website is replaced, but you, by using our website, are notified about it, take care of the matter and your clients are safe. </p>
+          </div>
+          <div class="col-md-4">
+            <h2>Pricing</h2>
+            <p>Our services inevitably come with some costs, which is why we offered the option of purchasing a subscription. You can check the current offer here.</p>
+            </div>
+        </div>
+        <div class="row">
+        <div class="col-md-4">
+            <p></p>
+            <p><a class="btn btn-secondary" href="#" role="button">View details &raquo;</a></p>
+          </div>
+          <div class="col-md-4">
+            <p></p>
+            <p><a class="btn btn-secondary" href="#" role="button">View details &raquo;</a></p>
+          </div>
+          <div class="col-md-4">
+            <p></p>
+            <p><a class="btn btn-secondary" href="#" role="button">View details &raquo;</a></p>
+            </div>
+        </div>
+
+      </div>
+
+    </main>
 {% endblock %}
