@@ -9,8 +9,11 @@
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-
     <link rel="stylesheet" type="text/css" href="{% static 'main.css' %}">
+
+
+    {% block header %}
+    {% endblock %}
 
     {% if title %}
         <title>DNS checker - {{ title }}</title>
@@ -31,8 +34,8 @@
             </div>
             <!-- Navbar Right Side -->
             <div class="navbar-nav">
-              <a class="nav-item nav-link" href="{% url 'login' %}">Login</a>
-              <a class="nav-item nav-link" href="{% url 'signup' %}">Register</a>
+              <a class="nav-item nav-link" href="{% url 'login' %}">log in</a>
+              <a class="nav-item nav-link" href="{% url 'signup' %}">register</a>
             </div>
           </div>
         </div>
