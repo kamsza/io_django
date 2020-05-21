@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth.forms import UserCreationForm
 
@@ -32,6 +32,7 @@ def signup_view(request, *args, **kwargs):
         form = CreateUserForm(request.POST)
         if form.is_valid():
             form.save()
+            return redirect('login')
 
     context = {'form': form}
     return render(request, "home_page/sign_up.html", context)
