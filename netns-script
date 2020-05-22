@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# adapted from
+# https://unix.stackexchange.com/questions/149293/feed-all-traffic-through-openvpn-for-a-specific-network-namespace-only
+
+case $script_type in
+        up)
+                ip netns add 0tdns
+                ip netns exec 0tdns ip link set dev lo up
+                ip link set dev "$1" up netns 0tdns mtu "$2"
+                ip netns exec 0tdns ip addr add dev "$1" \
+                        "$4/${ifconfig_netmask:-30}" \
+                        ${ifconfig_broadcast:+broadcast "$ifconfig_broadcast"}
+                if [ -n "$ifconfig_ipv6_local" ]; then
+                        ip netns exec 0tdns ip addr add dev "$1" \
+                                "$ifconfig_ipv6_local"/112
+                fi
+                ;;
+        route-up)
+                ip netns exec 0tdns ip route add default via "$ifconfig_remote"
+		
+                if [ -n "$ifconfig_ipv6_remote" ]; then
+                        ip netns exec 0tdns ip route add default via \
+                                "$ifconfig_ipv6_remote"
+                fi
+
+		# notify our sh process, that openvpn finished initializing
+		kill -usr1 `cat /var/lib/0tdns/shell_pid`
+
+		# we no longer need this connection
+		#kill $OPENVPN_PID
+
+                ;;
+        down)
+                ip netns delete 0tdns
+                ;;
+esac
