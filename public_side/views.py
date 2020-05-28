@@ -51,3 +51,7 @@ def login_view(request, *args, **kwargs):
 
     context = {}
     return render(request, "home_page/log_in.html", context)
+
+def logout_view(request):
+    logout(request)
+    return redirect('home')

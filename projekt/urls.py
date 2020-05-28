@@ -22,6 +22,7 @@ from user_side.views import *
 urlpatterns = [
     path('', homepage_view, name='home'),
     path('login/', login_view, name='login'),
+    path('logout/', logout_view, name='logout'),
     path('signup/', signup_view, name='signup'),
     path('user/', userbase_view, name='user'),
     path('pricing/', pricing_view, name='pricing'),
