@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from pages.forms import CreateUserForm
+from public_side.models import CreateUserForm
 
 # HOME PAGE
 def homepage_view(request, *args, **kwargs):
