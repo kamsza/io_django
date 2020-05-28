@@ -3,35 +3,36 @@
 # adapted from
 # https://unix.stackexchange.com/questions/149293/feed-all-traffic-through-openvpn-for-a-specific-network-namespace-only
 
+# vpn_wrapper.sh creates another script of name helper_script<timestamp>.sh,
+# which gets called by openvpn process, exports NAMESPACE_NAME and WRAPPER_PID
+# variables and then runs this script
+
 case $script_type in
-        up)
-                ip netns add 0tdns
-                ip netns exec 0tdns ip link set dev lo up
-                ip link set dev "$1" up netns 0tdns mtu "$2"
-                ip netns exec 0tdns ip addr add dev "$1" \
+    up)
+	env
+	        ip netns add $NAMESPACE_NAME
+                ip netns exec $NAMESPACE_NAME ip link set dev lo up
+                ip link set dev "$1" up netns $NAMESPACE_NAME mtu "$2"
+                ip netns exec $NAMESPACE_NAME ip addr add dev "$1" \
                         "$4/${ifconfig_netmask:-30}" \
                         ${ifconfig_broadcast:+broadcast "$ifconfig_broadcast"}
                 if [ -n "$ifconfig_ipv6_local" ]; then
-                        ip netns exec 0tdns ip addr add dev "$1" \
+                        ip netns exec $NAMESPACE_NAME ip addr add dev "$1" \
                                 "$ifconfig_ipv6_local"/112
                 fi
                 ;;
         route-up)
-                ip netns exec 0tdns ip route add default via "$ifconfig_remote"
+                ip netns exec $NAMESPACE_NAME ip route add default via "$ifconfig_remote"
 		
                 if [ -n "$ifconfig_ipv6_remote" ]; then
-                        ip netns exec 0tdns ip route add default via \
+                        ip netns exec $NAMESPACE_NAME ip route add default via \
                                 "$ifconfig_ipv6_remote"
                 fi
 
 		# notify our sh process, that openvpn finished initializing
-		kill -usr1 `cat /var/lib/0tdns/shell_pid`
-
-		# we no longer need this connection
-		#kill $OPENVPN_PID
-
+		kill -usr1 $WRAPPER_PID
                 ;;
         down)
-                ip netns delete 0tdns
+                ip netns delete $NAMESPACE_NAME
                 ;;
 esac
