@@ -1,22 +1,20 @@
 #!/bin/sh
 
-# run this script as root
+# If we have an argument - use it as installation root
+# and prefer it over INSTALL_ROOT variable;
+# Otherwise, use INSTALL_ROOT if set;
+# Otherwise, use "/"
+if [ "x" != "x$1" ]; then
+    INSTALL_ROOT="$1"
+elif [ "x" = "x$INSTALL_ROOT" ]; then
+    INSTALL_ROOT=/
+fi
 
-# more could go here (e.g. initialization of postgres database)
+# Perhaps libexec could be used for those scripts, but many
+# systems don't use libexec;
+# The reason they won't go to /usr/sbin or the like is because
+# they're not to be executed directly by the user
+install -D -m744 vpn_wrapper.sh "$INSTALL_ROOT"/var/lib/0tdns/vpn_wrapper.sh
+install -D -m744 netns-script "$INSTALL_ROOT"/var/lib/0tdns/netns-script
 
-mkdir -p /var/lib/0tdns/
-
-mkdir -p /etc/netns/0tdns/
-
-# in case we want some process in the namespace to be able
-# to resolve domain names via libc we put some random public
-# dns in namespace sepcific's resolv.conf;
-# note, that while libunbound we're using will probably have
-# dns addresses provided by us, it is still possible to pass
-# a domain name as forwarder address to unbound, in which case
-# it will try to resolve it first using libc
-echo nameserver 23.253.163.53 > /etc/netns/0tdns/resolv.conf
-
-# part of the program running inside network namespace
-# will run under this user
-sudo useradd --system 0tdns
+# simillar approach will be used to install other files

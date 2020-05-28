@@ -1,8 +1,12 @@
 #!/bin/sh
 
-# revert what was done in install.sh
-rm -rf /var/lib/0tdns/
+# run as root, obviously
 
-rm -rf /etc/netns/0tdns/
-
+# revert what was done in setup.sh
 userdel 0tdns
+
+# if told to - also revert what was done in install.sh
+if [ "x$1" = "x--delete-files" ]; then
+    rm -r /var/lib/0tdns/
+    rm -r /etc/netns/0tdns*
+fi
