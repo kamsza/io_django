@@ -39,8 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # own
-    'web_service.apps.WebServiceConfig',
-    'pages.apps.PagesConfig',
+    'public_side.apps.PublicSideConfig',
+    'user_side.apps.UserSideConfig'
 ]
 
 MIDDLEWARE = [

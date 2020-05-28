@@ -9,7 +9,7 @@ class Service(models.Model):
 
 class DNS(models.Model):
     label = models.CharField(max_length=100)
-    location = models.CharField(max_length=100)
+    location = models.ForeignKey('LOCATION', on_delete=models.DO_NOTHING, related_name='+')
     IP = models.GenericIPAddressField()
 
 class Location(models.Model):
@@ -17,23 +17,23 @@ class Location(models.Model):
     continent = models.CharField(max_length=20)
     country = models.CharField(max_length=20)
     address = models.CharField(max_length=50, null=True)
-    
+
 class Service_DNS(models.Model):
-    service = models.ForeignKey('Service', on_delete=models.SET_NULL)
+    service = models.ForeignKey('Service', on_delete=models.CASCADE)
     dns = models.ForeignKey('DNS', on_delete=models.SET_NULL, null=True)
 
 class History(models.Model):
     service = models.ForeignKey('Service', on_delete=models.CASCADE)
     dns = models.ForeignKey('DNS', on_delete=models.SET_NULL, null=True)
     date = models.DateTimeField(default=timezone.now)
-    result = models.CharField(max_length=50)
-    
+    result = models.CharField(max_length=50, choices=[('OK', 'correct result'), ('WRONG', 'wrong IP returned')])
+
 class Subscription(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    service = models.ForeignKey('Service', on_delete=models.SET_NULL)
+    service = models.ForeignKey('Service', on_delete=models.CASCADE)
     start_date = models.DateField(auto_now_add=True)
     end_date = models.DateField()
-    
+
 class Order(models.Model):
     subscription = models.ForeignKey('Subscription', on_delete=models.DO_NOTHING)
     date = models.DateField(auto_now_add=True)
