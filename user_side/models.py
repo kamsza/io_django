@@ -21,3 +21,9 @@ class History(models.Model):
     dns = models.ForeignKey('DNS', on_delete=models.SET_NULL, null=True)
     date = models.DateTimeField(default=timezone.now)
     result = models.CharField(max_length=50)
+    
+class Subscription(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    service = models.ForeignKey('Service', on_delete=models.SET_NULL)
+    start_date = models.DateField(auto_now_add=True)
+    end_date = models.DateField()
