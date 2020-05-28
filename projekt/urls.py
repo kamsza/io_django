@@ -17,6 +17,7 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import path
 from public_side.views import *
+from user_side.views import *
 
 urlpatterns = [
     path('', homepage_view, name='home'),
@@ -26,5 +27,6 @@ urlpatterns = [
     path('pricing/', pricing_view, name='pricing'),
     path('about_us/', aboutus_view, name='about us'),
     path('description/', aboutproblem_view, name='problem description'),
+    path('user_page/', user_main_page_view, name='user page'),
     path('admin/', admin.site.urls),
 ]
