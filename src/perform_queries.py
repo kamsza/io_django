@@ -1,5 +1,6 @@
 #!/bin/python3
 
+from sys import argv
 import unbound
 
 def query_planned_queries(hour, vpn_id):
@@ -22,9 +23,9 @@ def resolve_call_back(mydata, status, result):
     if status==0 and result.havedata:
         print("Result:",result.data.address_list)
 
-#                                                       hour from argv    | vpn_id in database
 contexts = []
-for dns_addr, dns_id, services in query_planned_queries("1999-01-08 04:00", 11):
+#                                                       hour from argv    | vpn_id in database
+for dns_addr, dns_id, services in query_planned_queries(argv[1], argv[2]):
     ctx = unbound.ub_ctx()
     ctx.set_fwd(dns_addr)
     for service_id, service_name in services:
@@ -34,6 +35,6 @@ for dns_addr, dns_id, services in query_planned_queries("1999-01-08 04:00", 11):
                           resolve_call_back,
                           unbound.RR_TYPE_A, unbound.RR_CLASS_IN)
     contexts.append(ctx)
-    
+
 for ctx in contexts:
     ctx.wait()
