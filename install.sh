@@ -17,6 +17,7 @@ fi
 install -D -m744 vpn_wrapper.sh "$INSTALL_ROOT"/var/lib/0tdns/vpn_wrapper.sh
 install -D -m744 netns-script "$INSTALL_ROOT"/var/lib/0tdns/netns-script
 install -D -m755 perform_queries.py "$INSTALL_ROOT"/var/lib/0tdns/perform_queries.py
+install -D -m644 db_connection_config.yml "$INSTALL_ROOT"/etc/0tdns/db_connection_config.yml
 
 # This one would make sense to be executed directly, so it'll go to sbin
 install -D -m744 hourly.py "$INSTALL_ROOT"/usr/sbin/hourly.py

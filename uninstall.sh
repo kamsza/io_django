@@ -10,4 +10,5 @@ if [ "x$1" = "x--delete-files" ]; then
     rm -r /var/lib/0tdns/
     rm -r /etc/netns/0tdns*
     rm /usr/sbin/hourly.sh /usr/sbin/hourly.py
+    rm -r /etc/0tdns
 fi
