@@ -9,11 +9,10 @@ class Service(models.Model):
 
 class DNS(models.Model):
     label = models.CharField(max_length=100)
-    location = models.ForeignKey('LOCATION', on_delete=models.DO_NOTHING, related_name='+')
+    location = models.ForeignKey('LOCATION', on_delete=models.DO_NOTHING)
     IP = models.GenericIPAddressField()
 
 class Location(models.Model):
-    dns = models.ForeignKey('DNS', on_delete=models.CASCADE, related_name='+')
     continent = models.CharField(max_length=20)
     country = models.CharField(max_length=20)
     address = models.CharField(max_length=50, null=True)
@@ -26,7 +25,8 @@ class History(models.Model):
     service = models.ForeignKey('Service', on_delete=models.CASCADE)
     dns = models.ForeignKey('DNS', on_delete=models.SET_NULL, null=True)
     date = models.DateTimeField(default=timezone.now)
-    result = models.CharField(max_length=50, choices=[('OK', 'correct result'), ('WRONG', 'wrong IP returned')])
+    returned_ip = models.GenericIPAddressField()
+    result = models.CharField(max_length=50)
 
 class Subscription(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
