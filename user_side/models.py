@@ -9,7 +9,7 @@ class Service(models.Model):
 
 class DNS(models.Model):
     label = models.CharField(max_length=100)
-    location = models.ForeignKey('LOCATION', on_delete=models.DO_NOTHING)
+    location = models.ForeignKey('Location', on_delete=models.DO_NOTHING)
     IP = models.GenericIPAddressField()
 
 class Location(models.Model):
@@ -20,10 +20,12 @@ class Location(models.Model):
 class Service_DNS(models.Model):
     service = models.ForeignKey('Service', on_delete=models.CASCADE)
     dns = models.ForeignKey('DNS', on_delete=models.SET_NULL, null=True)
+    vpn = models.ForeignKey('VPN', on_delete=models.SET_NULL, null=True)
 
 class History(models.Model):
     service = models.ForeignKey('Service', on_delete=models.CASCADE)
     dns = models.ForeignKey('DNS', on_delete=models.SET_NULL, null=True)
+    vpn = models.ForeignKey('VPN', on_delete=models.SET_NULL, null=True)
     date = models.DateTimeField(default=timezone.now)
     returned_ip = models.GenericIPAddressField()
     result = models.CharField(max_length=50)
@@ -39,3 +41,7 @@ class Order(models.Model):
     date = models.DateField(auto_now_add=True)
     value = models.DecimalField(max_digits=6, decimal_places=2)
     payment_id = models.CharField(max_length=20)
+
+class VPN(models.Model):
+    location = models.ForeignKey('Location', on_delete=models.DO_NOTHING)
+    nlconfig_file = models.BinaryField()
