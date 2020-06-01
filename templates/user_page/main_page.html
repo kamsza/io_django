@@ -1,7 +1,24 @@
 {% extends "user_page/base.html" %}
 
+{% block header %}
+<style>
+.btn-primary {
+position: absolute;
+top: 60px;
+right: 10px;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-    <h1>USER LOGGED IN</h1>
-    <h1>HELLO: {{request.user.username}}</h1>
+    <h1>USER {{request.user.username}} LOGGED IN</h1>
     <a class="btn btn-primary" href="{% url 'logout'%}">Log out</a>
+
+    {% for user_dns in user_dns_list %}
+        <h1> {{ user_dns.label }}</h1>
+        <p> IP: {{  user_dns.ip }} </p>
+        <p> Status: {{  user_dns.status }} </p>
+        <p> Last checked: {{  user_dns.last_checked }} </p>
+    {% endfor %}
+
 {% endblock %}

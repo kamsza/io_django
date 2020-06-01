@@ -16,18 +16,20 @@ Including another URLconf
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import path
-from public_side.views import *
-from user_side.views import *
+import public_side.views as public_side
+import user_side.views as user_side
 
 urlpatterns = [
-    path('', homepage_view, name='home'),
-    path('login/', login_view, name='login'),
-    path('logout/', logout_view, name='logout'),
-    path('signup/', signup_view, name='signup'),
-    path('user/', userbase_view, name='user'),
-    path('pricing/', pricing_view, name='pricing'),
-    path('about_us/', aboutus_view, name='about us'),
-    path('description/', aboutproblem_view, name='problem description'),
-    path('user_page/', user_main_page_view, name='user page'),
+    path('', public_side.homepage_view, name='home'),
+    path('login/', public_side.login_view, name='login'),
+    path('logout/', public_side.logout_view, name='logout'),
+    path('signup/', public_side.signup_view, name='signup'),
+    path('user/', public_side.userbase_view, name='user'),
+    path('pricing/', public_side.pricing_view, name='pricing'),
+    path('about_us/', public_side.aboutus_view, name='about us'),
+    path('description/', public_side.aboutproblem_view, name='problem description'),
+
+    path('user_page/', user_side.home_page_view, name='user page'),
+
     path('admin/', admin.site.urls),
 ]
