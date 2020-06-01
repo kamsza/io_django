@@ -9,7 +9,7 @@
 {% block content %}
     <main role="main" class="home_containers">
 
-    {% if not user_dns_list %}
+    {% if not user_services %}
         <div class="nosub_text">
             <p> You have no active subscriptions </p>
         </div>
@@ -18,17 +18,17 @@
         </div>
     {% endif %}
 
-    {% for user_dns in user_dns_list %}
+    {% for service in user_services %}
         <div class="home_container">
-            {% if user_dns.status == 'OK' %}
+            {% if service.status == 'OK' %}
                <img class="mb-4" src="{% static 'result_ok.svg' %}">
-            {% else %}
+            {% elif service.status == 'WRONG IP' %}
                <img class="mb-4" src="{% static 'result_wrong.svg' %}">
             {% endif %}
-            <h1> {{ user_dns.label }}</h1>
-            <p> IP: {{  user_dns.ip }} </p>
-            <p> Status: {{  user_dns.status }} </p>
-            <p> Last checked: {{  user_dns.last_checked }} </p>
+            <h1> {{ service.label }}</h1>
+            <p> IP: {{  service.ip }} </p>
+            <p> Status: {{  service.status }} </p>
+            <p> Last checked: {{  service.last_checked }} </p>
         </div>
     {% endfor %}
     </main>
