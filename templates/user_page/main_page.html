@@ -13,16 +13,18 @@
 {% endblock %}
 
 {% block content %}
-    <h1>USER {{request.user.username}} LOGGED IN</h1>
-    <a class="btn btn-primary" href="{% url 'logout'%}">Log out</a>
-
     <main role="main" class="home_containers">
     {% for user_dns in user_dns_list %}
         <div class="home_container">
-        <h1> {{ user_dns.label }}</h1>
-        <p> IP: {{  user_dns.ip }} </p>
-        <p> Status: {{  user_dns.status }} </p>
-        <p> Last checked: {{  user_dns.last_checked }} </p>
+            {% if user_dns.status == 'OK' %}
+               <img class="mb-4" src="{% static 'result_ok.svg' %}">
+            {% else %}
+               <img class="mb-4" src="{% static 'result_wrong.svg' %}">
+            {% endif %}
+            <h1> {{ user_dns.label }}</h1>
+            <p> IP: {{  user_dns.ip }} </p>
+            <p> Status: {{  user_dns.status }} </p>
+            <p> Last checked: {{  user_dns.last_checked }} </p>
         </div>
     {% endfor %}
     </main>

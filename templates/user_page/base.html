@@ -34,8 +34,8 @@
             </div>
             <!-- Navbar Right Side -->
             <div class="navbar-nav">
-              <a class="nav-item nav-link" href="{% url 'login' %}">log in</a>
-              <a class="nav-item nav-link" href="{% url 'signup' %}">register</a>
+                <a class="navbar-brand mr-4" href="">{{request.user.username}}</a>
+                <a class="navbar-brand mr-4" href="{% url 'logout'%}">log out</a>
             </div>
           </div>
         </div>
