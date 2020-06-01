@@ -1,0 +1,44 @@
+
+img {
+  float: right;
+  margin-top:1%;
+  height: 160px;
+}
+
+.home_container {
+  padding: 10px 5%;
+  margin-bottom: 2rem;
+  background-color: #e9ecef;
+  border-radius: 0.3rem;
+}
+
+.home_containers {
+  width: 100%;
+  padding-right: 15px;
+  padding-left: 15px;
+  margin-right: auto;
+  margin-left: auto;
+}
+@media (min-width: 576px) {
+  .home_containers {
+    max-width: 540px;
+  }
+}
+
+@media (min-width: 768px) {
+  .home_containers {
+    max-width: 720px;
+  }
+}
+
+@media (min-width: 992px) {
+  .home_containers {
+    max-width: 960px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .home_containers {
+    max-width: 1140px;
+  }
+}
