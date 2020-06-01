@@ -16,11 +16,8 @@ user_dns_list = [
 ]
 
 # Create your views here.
-def main_page_view(request, *args, **kwargs):
-    return render(request, "user_page/main_page.html", {})
-
 def home_page_view(request, *args, **kwargs):
     context = {
         'user_dns_list': user_dns_list
     }
-    return render(request, "user_page/main_page.html", context)
+    return render(request, "user_page/main_page.html", {})

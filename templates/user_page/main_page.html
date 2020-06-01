@@ -3,17 +3,21 @@
 
 {% block header %}
     <link rel="stylesheet" type="text/css" href="{% static 'user_home_style.css' %}">
-    <style>
-    .btn-primary {
-        position: absolute;
-        top: 60px;
-        right: 10px;
-    }
-    </style>
+
 {% endblock %}
 
 {% block content %}
     <main role="main" class="home_containers">
+
+    {% if not user_dns_list %}
+        <div class="nosub_text">
+            <p> You have no active subscriptions </p>
+        </div>
+        <div class="nosub_btn">
+            <a class="btn btn-primary" href="">buy subscription</a>
+        </div>
+    {% endif %}
+
     {% for user_dns in user_dns_list %}
         <div class="home_container">
             {% if user_dns.status == 'OK' %}

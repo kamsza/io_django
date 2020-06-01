@@ -5,6 +5,22 @@ img {
   height: 160px;
 }
 
+.nosub_text{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-top: -20px;
+    transform: translate(-50%, -50%);
+}
+
+.nosub_btn{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-top: 20px;
+    transform: translate(-50%, -50%);
+}
+
 .home_container {
   padding: 10px 5%;
   margin-bottom: 2rem;
@@ -42,3 +58,4 @@ img {
     max-width: 1140px;
   }
 }
+
