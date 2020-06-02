@@ -28,7 +28,6 @@ def home_page_view(request, *args, **kwargs):
     services = []
     for subscription in subscriptions:
         services.append(subscription.service)
-    print(services)
     history = []
     for service in services:
         history.append(History.objects.filter(service_id=service.id).order_by('-id')[0])

@@ -6,7 +6,7 @@ from .models import *
 admin.site.register(Service)
 admin.site.register(DNS)
 admin.site.register(Location)
-admin.site.register(Service_DNS)
+#admin.site.register(Queries)
 admin.site.register(History)
 admin.site.register(Subscription)
 admin.site.register(Order)

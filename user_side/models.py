@@ -17,7 +17,8 @@ class Location(models.Model):
     country = models.CharField(max_length=20)
     address = models.CharField(max_length=50, null=True)
 
-class Service_DNS(models.Model):
+
+class Queries(models.Model):
     service = models.ForeignKey('Service', on_delete=models.CASCADE)
     dns = models.ForeignKey('DNS', on_delete=models.SET_NULL, null=True)
     vpn = models.ForeignKey('VPN', on_delete=models.SET_NULL, null=True)
@@ -27,8 +28,12 @@ class History(models.Model):
     dns = models.ForeignKey('DNS', on_delete=models.SET_NULL, null=True)
     vpn = models.ForeignKey('VPN', on_delete=models.SET_NULL, null=True)
     date = models.DateTimeField(default=timezone.now)
-    returned_ip = models.GenericIPAddressField()
+    returned_ips = models.ForeignKey('ReturnedIP', on_delete=models.CASCADE)
     result = models.CharField(max_length=50)
+
+class ReturnedIP(models.Model):
+    vpn = models.ForeignKey('History', on_delete=models.CASCADE)
+    returned_ip = models.GenericIPAddressField()
 
 class Subscription(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
@@ -44,4 +49,5 @@ class Order(models.Model):
 
 class VPN(models.Model):
     location = models.ForeignKey('Location', on_delete=models.DO_NOTHING)
-    nlconfig_file = models.BinaryField()
+    ovpn_config = models.BinaryField()
+    ovpn_config_sha256 = models.CharField(max_length=64)
