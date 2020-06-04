@@ -3,6 +3,7 @@
 from sys import argv
 import subprocess
 from os import path
+from time import gmtime, strftime
 
 # our own module used by several scripts in the project
 from ztdns_db_connectivity import start_db_connection
@@ -38,7 +39,10 @@ def get_vpn_connections(cursor, hour):
 connection = start_db_connection()
 cursor = connection.cursor()
 
-hour = argv[1]
+# round down to an hour - this datetime format is one
+# of the formats accepted by postgres
+hour = strftime('%Y-%m-%d %H:00', gmtime())
+
 vpns = get_vpn_connections(cursor, hour)
 
 for vpn_id, config_hash in vpns:

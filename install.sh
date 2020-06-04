@@ -20,12 +20,10 @@ install -D -m755 src/perform_queries.py "$INSTALL_ROOT"/var/lib/0tdns/perform_qu
 install -D -m644 db_connection_config.yml "$INSTALL_ROOT"/etc/0tdns/db_connection_config.yml
 
 # This one would make sense to be executed directly, so it'll go to sbin
+# This happens to also be the script, that gets called by cron
 install -D -m744 src/hourly.py "$INSTALL_ROOT"/usr/sbin/hourly.py
 
 # This one shall be imported from other scripts
 install -D -m644 src/ztdns_db_connectivity.py "$INSTALL_ROOT"/usr/lib/python3/dist-packages/ztdns_db_connectivity.py
-
-# This is the script, that will get called by cron
-install -D -m744 src/hourly.sh "$INSTALL_ROOT"/usr/sbin/hourly.sh
 
 # simillar approach will be used to install other files

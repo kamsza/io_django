@@ -22,7 +22,7 @@ crontab -l 2> /dev/null |
 if [ "x$1" = "x--delete-files" ]; then
     rm -r /var/lib/0tdns/
     rm -r /etc/netns/0tdns*
-    rm /usr/sbin/hourly.sh /usr/sbin/hourly.py
+    rm /usr/sbin/hourly.py
     rm -r /etc/0tdns
     rm /usr/lib/python3/dist-packages/ztdns_db_connectivity.py
 fi
