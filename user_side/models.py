@@ -23,16 +23,15 @@ class Queries(models.Model):
     dns = models.ForeignKey('DNS', on_delete=models.SET_NULL, null=True)
     vpn = models.ForeignKey('VPN', on_delete=models.SET_NULL, null=True)
 
-class History(models.Model):
+class Responses(models.Model):
     service = models.ForeignKey('Service', on_delete=models.CASCADE)
     dns = models.ForeignKey('DNS', on_delete=models.SET_NULL, null=True)
     vpn = models.ForeignKey('VPN', on_delete=models.SET_NULL, null=True)
     date = models.DateTimeField(default=timezone.now)
-    returned_ips = models.ForeignKey('ReturnedIP', on_delete=models.CASCADE)
     result = models.CharField(max_length=50)
 
-class ReturnedIP(models.Model):
-    vpn = models.ForeignKey('History', on_delete=models.CASCADE)
+class Response(models.Model):
+    responses = models.ForeignKey('Responses', on_delete=models.CASCADE)
     returned_ip = models.GenericIPAddressField()
 
 class Subscription(models.Model):

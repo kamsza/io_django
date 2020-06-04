@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import User
-from .models import Subscription, History
+from .models import Subscription, Responses, Response
 
 user_dns_list = [
     {
@@ -28,13 +28,14 @@ def home_page_view(request, *args, **kwargs):
     services = []
     for subscription in subscriptions:
         services.append(subscription.service)
-    history = []
+    responses = []
     for service in services:
-        history.append(History.objects.filter(service_id=service.id).order_by('-id')[0])
+        responses.append(Responses.objects.filter(service_id=service.id).order_by('-id')[0])
     user_services = []
-    for registry in history:
+    for registry in responses:
+        returned_ip = Response.objects.filter(responses_id=registry.id).order_by('-id')[0]
         user_services.append({'label': registry.service.name,
-                              'ip': registry.service.IP,
+                              'ip': returned_ip,
                               'status': registry.result,
                               'last_checked': registry.date
                               })

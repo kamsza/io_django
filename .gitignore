@@ -6,3 +6,4 @@ venv/
 venv/*
 venv/*/*
 venv/*/*/*
+projekt/settings.py
