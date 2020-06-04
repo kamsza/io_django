@@ -23,14 +23,16 @@ You also need some setup, which is done with
 
     # ./setup.sh
 
-For now, the `setup.sh` script only creates a `0tdns` user in the system.
-Some other setup-related stuff might be added to it later.
+For now, the `setup.sh` script creates a `0tdns` user in the system
+and adds an entry in root's crontab. Some other setup-related stuff
+might be added to it later.
 
 One might wonder why there isn't a single script to install files and
-create the user? The reason is, again, to make things easier for distros.
+setup the system? The reason is, again, to make things easier for distros.
 Packager would install software to a directory and make a package from it
-(using appropriate tools, of course). They would use `setup.sh` to create
-a script, that is attached to the package and run at installation.
+(using appropriate tools, of course). They would use commands from
+`setup.sh` to create a script, that is attached to the package and run
+at installation.
 
 Now, execute:
 
@@ -45,10 +47,10 @@ work with database.
 
 For other half (database creation and front-end) check https://github.com/kamsza/io_django
 
-You can remove te user with
+You can remove te user nad crontab entry with
 
     # ./uninstall.sh
 
-Or remove the user together with files by running
+To do this and also remove files, run
 
     # ./uninstall.sh --delete-files
