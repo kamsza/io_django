@@ -9,7 +9,6 @@
 
 case $script_type in
     up)
-	env
 	        ip netns add $NAMESPACE_NAME
                 ip netns exec $NAMESPACE_NAME ip link set dev lo up
                 ip link set dev "$1" up netns $NAMESPACE_NAME mtu "$2"
