@@ -13,7 +13,7 @@ db_config_path = '/etc/0tdns/db_connection_config.yml'
 def sync_ovpn_config(cursor, vpn_id, config_path, config_hash):
     cursor.execute('''
     select ovpn_config
-    from vpn
+    from user_side_vpn
     where id = %s and ovpn_config_sha256 = %s
     ''', (vpn_id, config_hash))
     
@@ -30,7 +30,7 @@ def get_vpn_connections(cursor, hour):
     # )
     cursor.execute('''
     select v.id, v.ovpn_config_sha256
-    from queries as q join vpn as v
+    from user_side_queries as q join user_side_vpn as v
     on v.id = q.vpn_id;
     ''')
     return cursor.fetchall()
