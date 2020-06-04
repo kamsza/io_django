@@ -2,13 +2,13 @@
 
 from sys import argv
 import subprocess
-import os.path
-import yaml
-import psycopg2
+from os import path
+
+# our own module used by several scripts in the project
+from ztdns_db_connectivity import start_db_connection
 
 wrapper = '/var/lib/0tdns/vpn_wrapper.sh'
 perform_queries = '/var/lib/0tdns/perform_queries.py'
-db_config_path = '/etc/0tdns/db_connection_config.yml'
 
 def sync_ovpn_config(cursor, vpn_id, config_path, config_hash):
     cursor.execute('''
@@ -35,10 +35,7 @@ def get_vpn_connections(cursor, hour):
     ''')
     return cursor.fetchall()
 
-config = yaml.safe_load(open(db_config_path, 'r'))
-connection = psycopg2.connect(user=config['user'], password=config['password'],
-                              host=config['host'], port=config['port'],
-                              database=config['database'])
+connection = start_db_connection()
 cursor = connection.cursor()
 
 hour = argv[1]
@@ -46,7 +43,7 @@ vpns = get_vpn_connections(cursor, hour)
 
 for vpn_id, config_hash in vpns:
     config_path = "/var/lib/0tdns/{}.ovpn".format(config_hash)
-    if not os.path.isfile(config_path):
+    if not path.isfile(config_path):
         sync_ovpn_config(cursor, vpn_id, config_path, config_hash)
 
 cursor.close()
