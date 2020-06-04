@@ -4,12 +4,11 @@ OPENVPN_CONFIG="$1"
 # rest of args is the command to run in network namespace
 shift
 
-# just in case something causes more instances of this script
-# to run simultaneously, we timestamp some names
-SECONDS=`date '+%s'`
+# to enable multiple instances of this script to run simultaneously,
+# we tag namespace name and file names with this shell's PID
 
-HELPER_SCRIPT=/var/lib/0tdns/helper_script$SECONDS.sh
-NAMESPACE_NAME=0tdns$SECONDS
+HELPER_SCRIPT=/var/lib/0tdns/helper_script$$.sh
+NAMESPACE_NAME=0tdns$$
 
 # we create another script as a way of passing variables
 # to netns-script
