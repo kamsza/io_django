@@ -5,23 +5,10 @@ OPENVPN_CONFIG="$1"
 shift
 
 # to enable multiple instances of this script to run simultaneously,
-# we tag namespace name and file names with this shell's PID
+# we tag namespace name with this shell's PID
 
-HELPER_SCRIPT=/var/lib/0tdns/helper_script$$.sh
+NETNS_SCRIPT=/var/lib/0tdns/netns-script
 NAMESPACE_NAME=0tdns$$
-
-# we create another script as a way of passing variables
-# to netns-script
-cat > $HELPER_SCRIPT <<EOF
-#!/bin/sh
-
-export NAMESPACE_NAME=$NAMESPACE_NAME
-export WRAPPER_PID=$$
-
-/var/lib/0tdns/netns-script "\$@"
-EOF
-
-chmod u+x $HELPER_SCRIPT
 
 # in case we want some process in the namespace to be able
 # to resolve domain names via libc we put some random public
@@ -37,9 +24,11 @@ echo nameserver 23.253.163.53 > /etc/netns/$NAMESPACE_NAME/resolv.conf
 # the netns-script, which creates tun inside network namespace
 # of name $NAMESPACE_NAME
 # we could consider using --daemon option instead of &
-openvpn --ifconfig-noexec --route-noexec --up $HELPER_SCRIPT \
-	--route-up $HELPER_SCRIPT --down $HELPER_SCRIPT \
-	--config "$OPENVPN_CONFIG" --script-security 2 &
+openvpn --ifconfig-noexec --route-noexec --up $NETNS_SCRIPT \
+	--route-up $NETNS_SCRIPT --down $NETNS_SCRIPT \
+	--config "$OPENVPN_CONFIG" --script-security 2 \
+	--setenv NAMESPACE_NAME $NAMESPACE_NAME \
+	--setenv WRAPPER_PID $$ &
 
 OPENVPN_PID=$!
 
@@ -64,4 +53,4 @@ kill $OPENVPN_PID
 wait $OPENVPN_PID
 
 # we no longer need those
-rm -r $HELPER_SCRIPT /etc/netns/$NAMESPACE_NAME/
+rm -r /etc/netns/$NAMESPACE_NAME/
