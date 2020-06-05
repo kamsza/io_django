@@ -2,7 +2,9 @@
 
 OPENVPN_CONFIG="$1"
 PHYSICAL_IP="$2"
+ROUTE_THROUGH_VETH="$3"
 # rest of args is the command to run in network namespace
+shift
 shift
 shift
 
@@ -49,7 +51,7 @@ openvpn --ifconfig-noexec --route-noexec --up $NETNS_SCRIPT \
 	--setenv WRAPPER_PID $$ \
 	--setenv VETH_HOST0 $VETH_HOST0 \
 	--setenv VETH_HOST1 $VETH_HOST1 \
-	--setenv ROUTE_THROUGH_VETH $DEFAULT_DNS/32 \
+	--setenv ROUTE_THROUGH_VETH $ROUTE_THROUGH_VETH\ $DEFAULT_DNS/32 \
 	--setenv PHYSICAL_IP $PHYSICAL_IP &
 
 OPENVPN_PID=$!
