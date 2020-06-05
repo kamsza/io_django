@@ -1,14 +1,31 @@
 #!/bin/sh
 
 OPENVPN_CONFIG="$1"
+PHYSICAL_IP="$2"
 # rest of args is the command to run in network namespace
 shift
+shift
+
+# for routing some traffic from within the namespace to physical
+# network (e.g. database connection) we need to create a veth pair;
+# as we want multiple instances of vpn_wrapper.sh to be able to
+# run simultaneously, we need unique ip addresses for them;
+# the solution is to derive an ip address from current shell's
+# PID (which is unique within a system)
+NUMBER=$((($$ - 1) * 4))
+WORD0HOST0=$(($NUMBER % 256 + 1))
+WORD0HOST1=$(($NUMBER % 256 + 2))
+NUMBER=$(($NUMBER / 256))
+WORD1=$(($NUMBER % 256))
+NUMBER=$(($NUMBER / 256))
+WORD2=$(($NUMBER % 256))
+VETH_HOST0=10.$WORD2.$WORD1.$WORD0HOST0
+VETH_HOST1=10.$WORD2.$WORD1.$WORD0HOST1
 
 # to enable multiple instances of this script to run simultaneously,
 # we tag namespace name with this shell's PID
-
-NETNS_SCRIPT=/var/lib/0tdns/netns-script
 NAMESPACE_NAME=0tdns$$
+NETNS_SCRIPT=/var/lib/0tdns/netns-script
 
 # in case we want some process in the namespace to be able
 # to resolve domain names via libc we put some random public
@@ -17,8 +34,9 @@ NAMESPACE_NAME=0tdns$$
 # dns addresses provided by us, it is still possible to pass
 # a domain name as forwarder address to unbound, in which case
 # it will try to resolve it first using libc
+DEFAULT_DNS=23.253.163.53
 mkdir -p /etc/netns/$NAMESPACE_NAME/
-echo nameserver 23.253.163.53 > /etc/netns/$NAMESPACE_NAME/resolv.conf
+echo nameserver $DEFAULT_DNS > /etc/netns/$NAMESPACE_NAME/resolv.conf
 
 # starts openvpn with our just-created helper script, which calls
 # the netns-script, which creates tun inside network namespace
@@ -28,7 +46,11 @@ openvpn --ifconfig-noexec --route-noexec --up $NETNS_SCRIPT \
 	--route-up $NETNS_SCRIPT --down $NETNS_SCRIPT \
 	--config "$OPENVPN_CONFIG" --script-security 2 \
 	--setenv NAMESPACE_NAME $NAMESPACE_NAME \
-	--setenv WRAPPER_PID $$ &
+	--setenv WRAPPER_PID $$ \
+	--setenv VETH_HOST0 $VETH_HOST0 \
+	--setenv VETH_HOST1 $VETH_HOST1 \
+	--setenv ROUTE_THROUGH_VETH $DEFAULT_DNS/32 \
+	--setenv PHYSICAL_IP $PHYSICAL_IP &
 
 OPENVPN_PID=$!
 
