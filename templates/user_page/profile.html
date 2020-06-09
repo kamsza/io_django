@@ -1,0 +1,20 @@
+{% extends "user_page/base.html" %}
+{%  load static %}
+
+{% block header %}
+{% endblock %}
+
+{% block sidebar %}
+    <li class="nav-item"><a class="nav-link" href="{% url 'user page' %}">Home</a></li>
+    <li class="nav-item"><a class="nav-link active" href="{% url 'user profile' %}">Profile</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'user statistics' %}">Statistics</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'buy subscription' %}">Buy subscription</a></li>
+{% endblock %}
+
+{% block content %}
+    <main role="main" class="home_containers">
+        <div class="nosub_text">
+            <p> You have no active subscriptions </p>
+        </div>
+    </main>
+{% endblock %}

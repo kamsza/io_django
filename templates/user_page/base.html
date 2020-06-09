@@ -10,11 +10,46 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="{% static 'main.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'dashboard.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'user_home_style.css' %}">
+    <link rel="canonical" href="https://getbootstrap.com/docs/4.5/examples/dashboard/">
 
+    <!-- Bootstrap core CSS -->
+    <link href="{% static 'bootstrap.css' %}" rel="stylesheet">
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
 
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+    </style>
     {% block header %}
     {% endblock %}
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
 
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+    </style>
     {% if title %}
         <title>DNS checker - {{ title }}</title>
     {% else %}
@@ -42,6 +77,19 @@
       </nav>
     </header>
 
+    <div class="container-fluid">
+        <div class="row">
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+                <div class="sidebar-sticky pt-3">
+                    <ul class="nav flex-column">
+                        {% block sidebar %}
+                            <!--SIDEBAR ELEMENTS HERE -->
+                        {% endblock %}
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
 
     {% block content %}
         <!--CONTENT OF A PAGE GOES HERE -->

@@ -22,6 +22,7 @@ class Queries(models.Model):
     service = models.ForeignKey('Service', on_delete=models.CASCADE)
     dns = models.ForeignKey('DNS', on_delete=models.SET_NULL, null=True)
     vpn = models.ForeignKey('VPN', on_delete=models.SET_NULL, null=True)
+    validity = models.IntegerField()
 
 class Responses(models.Model):
     service = models.ForeignKey('Service', on_delete=models.CASCADE)
