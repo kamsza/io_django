@@ -2,6 +2,23 @@
 {%  load static %}
 
 {% block header %}
+    <style>
+        .nosub_text{
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            margin-top: -20px;
+            transform: translate(-50%, -50%);
+        }
+
+        .nosub_btn{
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            margin-top: 20px;
+            transform: translate(-50%, -50%);
+        }
+    </style>
 {% endblock %}
 
 {% block sidebar %}
@@ -19,7 +36,7 @@
             <p> You have no active subscriptions </p>
         </div>
         <div class="nosub_btn">
-            <a class="btn btn-primary" href="">buy subscription</a>
+            <a class="btn btn-primary" href="{% url 'buy subscription' %}">buy subscription</a>
         </div>
     {% endif %}
 
