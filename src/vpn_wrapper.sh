@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# We give the full path, because PATH environment variable
+# might be unset if run by cron
+OVPN_COMMAND="/usr/sbin/openvpn"
+
 OPENVPN_CONFIG="$1"
 PHYSICAL_IP="$2"
 ROUTE_THROUGH_VETH="$3"
@@ -44,16 +48,16 @@ echo nameserver $DEFAULT_DNS > /etc/netns/$NAMESPACE_NAME/resolv.conf
 # the netns-script, which creates tun inside network namespace
 # of name $NAMESPACE_NAME
 # we could consider using --daemon option instead of &
-openvpn --ifconfig-noexec --route-noexec --up $NETNS_SCRIPT \
-	--route-up $NETNS_SCRIPT --down $NETNS_SCRIPT \
-	--config "$OPENVPN_CONFIG" --script-security 2 \
-	--connect-timeout 20 \
-	--setenv NAMESPACE_NAME $NAMESPACE_NAME \
-	--setenv WRAPPER_PID $$ \
-	--setenv VETH_HOST0 $VETH_HOST0 \
-	--setenv VETH_HOST1 $VETH_HOST1 \
-	--setenv ROUTE_THROUGH_VETH $ROUTE_THROUGH_VETH\ $DEFAULT_DNS/32 \
-	--setenv PHYSICAL_IP $PHYSICAL_IP &
+$OVPN_COMMAND --ifconfig-noexec --route-noexec --up $NETNS_SCRIPT \
+	      --route-up $NETNS_SCRIPT --down $NETNS_SCRIPT \
+	      --config "$OPENVPN_CONFIG" --script-security 2 \
+	      --connect-timeout 20 \
+	      --setenv NAMESPACE_NAME $NAMESPACE_NAME \
+	      --setenv WRAPPER_PID $$ \
+	      --setenv VETH_HOST0 $VETH_HOST0 \
+	      --setenv VETH_HOST1 $VETH_HOST1 \
+	      --setenv ROUTE_THROUGH_VETH $ROUTE_THROUGH_VETH\ $DEFAULT_DNS/32 \
+	      --setenv PHYSICAL_IP $PHYSICAL_IP &
 
 OPENVPN_PID=$!
 
