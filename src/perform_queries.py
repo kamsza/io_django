@@ -67,7 +67,7 @@ def resolve_call_back(mydata, status, result):
     INSERT INTO user_side_responses (date, result, dns_id, service_id, vpn_id)
     VALUES (current_timestamp, %s, %s, %s, %s)
     RETURNING id
-    ''', (query.dns_id, result_info, query.service_id, query.vpn_id))
+    ''', (result_info, query.dns_id, query.service_id, query.vpn_id))
 
     responses_id = query.cursor.fetchone()[0]
 
