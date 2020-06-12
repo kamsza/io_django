@@ -39,36 +39,42 @@ def get_vpn_connections(cursor, hour):
     ''')
     return cursor.fetchall()
 
-ztdns_config = get_ztdns_config()
-if ztdns_config['enabled'] != 'yes':
-    exit()
+with open("/var/log/0tdns.log", "w") as logfile:
+    # round down to an hour - this datetime format is one
+    # of the formats accepted by postgres
+    hour = strftime('%Y-%m-%d %H:00', gmtime())
+    logfile.write("Running for {}\n".format(hour))
+    
+    ztdns_config = get_ztdns_config()
+    if ztdns_config['enabled'] != 'yes':
+        logfile.write("0tdns not enabled in the config - exiting\n")
+        exit()
 
-connection = start_db_connection(ztdns_config)
-cursor = connection.cursor()
+    connection = start_db_connection(ztdns_config)
+    cursor = connection.cursor()
 
-# round down to an hour - this datetime format is one
-# of the formats accepted by postgres
-hour = strftime('%Y-%m-%d %H:00', gmtime())
+    vpns = get_vpn_connections(cursor, hour)
 
-vpns = get_vpn_connections(cursor, hour)
+    handled_vpns = ztdns_config.get('handled_vpns')
+    if handled_vpns:
+        logfile.write("Only handling vpns of ids {}\n".format(handled_vpns))
+        vpns = [vpn for vpn in vpns if vpn[0] in handled_vpns]
 
-handled_vpns = ztdns_config['handled_vpns']
-if handled_vpns:
-    vpns = [vpn for vpn in vpns if vpn[0] in handled_vpns]
+    for vpn_id, config_hash in vpns:
+        config_path = "/var/lib/0tdns/{}.ovpn".format(config_hash)
+        if not path.isfile(config_path):
+            logfile.write("Syncing config for vpn {} with hash {}\n"\
+                          .format(vpn_id, config_hash))
+            sync_ovpn_config(cursor, vpn_id, config_path, config_hash)
 
-for vpn_id, config_hash in vpns:
-    config_path = "/var/lib/0tdns/{}.ovpn".format(config_hash)
-    if not path.isfile(config_path):
-        sync_ovpn_config(cursor, vpn_id, config_path, config_hash)
+    cursor.close()
+    connection.close()
 
-cursor.close()
-connection.close()
-
-for vpn_id, config_hash in vpns:
-    config_path = "/var/lib/0tdns/{}.ovpn".format(config_hash)
-    physical_ip = get_default_host_address(ztdns_config['host'])
-    route_through_veth = ztdns_config['host'] + "/32"
-    command_in_namespace = [perform_queries, hour, str(vpn_id)]
-    print('RUNNING OPENVPN FOR {}'.format(vpn_id))
-    subprocess.run([wrapper, config_path, physical_ip,
-                    route_through_veth] + command_in_namespace)
+    for vpn_id, config_hash in vpns:
+        config_path = "/var/lib/0tdns/{}.ovpn".format(config_hash)
+        physical_ip = get_default_host_address(ztdns_config['host'])
+        route_through_veth = ztdns_config['host'] + "/32"
+        command_in_namespace = [perform_queries, hour, str(vpn_id)]
+        logfile.write("Running connection for vpn {}\n".format(vpn_id))
+        subprocess.run([wrapper, config_path, physical_ip,
+                        route_through_veth] + command_in_namespace)
