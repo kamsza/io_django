@@ -51,8 +51,11 @@ cursor = connection.cursor()
 hour = strftime('%Y-%m-%d %H:00', gmtime())
 
 vpns = get_vpn_connections(cursor, hour)
-vpns = [vpn for vpn in vpns if vpn[0] in ztdns_config['handled_vpns']]
-print(vpns)
+
+handled_vpns = ztdns_config['handled_vpns']
+if handled_vpns:
+    vpns = [vpn for vpn in vpns if vpn[0] in handled_vpns]
+
 for vpn_id, config_hash in vpns:
     config_path = "/var/lib/0tdns/{}.ovpn".format(config_hash)
     if not path.isfile(config_path):
