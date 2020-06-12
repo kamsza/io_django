@@ -58,13 +58,16 @@ def resolve_call_back(mydata, status, result):
     # debugging
     print("callback called for {}".format(result.qname))
     if status==0 and result.havedata:
+        result_info = 'successful'
         print("Result:",result.data.address_list)
+    else:
+        result_info = 'not found'
     # write to database
     query.cursor.execute('''
     INSERT INTO user_side_responses (date, result, dns_id, service_id, vpn_id)
-    VALUES (current_timestamp, '', %s, %s, %s)
+    VALUES (current_timestamp, %s, %s, %s, %s)
     RETURNING id
-    ''', (query.dns_id, query.service_id, query.vpn_id))
+    ''', (query.dns_id, result_info, query.service_id, query.vpn_id))
 
     responses_id = query.cursor.fetchone()[0]
 
