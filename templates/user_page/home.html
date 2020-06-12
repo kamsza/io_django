@@ -29,8 +29,6 @@
 {% endblock %}
 
 {% block content %}
-    <main role="main" class="home_containers">
-
     {% if not user_services %}
         <div class="nosub_text">
             <p> You have no active subscriptions </p>
@@ -48,10 +46,9 @@
                <img class="mb-4" src="{% static 'result_wrong.svg' %}">
             {% endif %}
             <h1> {{ service.label }}</h1>
-            <p> IP: {{  service.ip }} </p>
+            <p> Name: {{  service.name }} </p>
             <p> Status: {{  service.status }} </p>
             <p> Last checked: {{  service.last_checked }} </p>
         </div>
     {% endfor %}
-    </main>
 {% endblock %}

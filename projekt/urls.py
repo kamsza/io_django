@@ -34,5 +34,7 @@ urlpatterns = [
     path('user_page/statistics/', user_side.statistics_view, name='user statistics'),
     path('user_page/buy/', user_side.buy_subscription_view, name='buy subscription'),
 
+    path('403/', user_side.error_view, name='error'),
+
     path('admin/', admin.site.urls),
 ]
