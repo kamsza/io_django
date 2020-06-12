@@ -1,0 +1,115 @@
+\documentclass{hitec}
+\usepackage{polski}
+\usepackage[utf8]{inputenc}
+\usepackage{url}
+\usepackage{xcolor}
+\usepackage[ampersand]{easylist}
+\newcommand{\dir}[1] {\texttt{\color{teal} \detokenize{#1}}}
+\definecolor{orange}{rgb}{1,0.5,0}
+\newcommand{\file}[1] {\texttt{\color{orange} \detokenize{#1}}}
+\newcommand{\filepath}[1] {\texttt{\color{violet} \detokenize{#1}}}
+\author{Mateusz Bielesz, Wojciech Kosior, Marek Moryl, Kamil Szarek}
+\title{Użytkowanie 0TDNS}
+\begin{document}
+\maketitle
+
+\begin{sloppypar}
+\section{Instalacja części back-endowej}
+
+W celu zainstalowania systemu klonujemy repozytorium: \url{https://repo.or.cz/0tDNS.git}
+i wykonujemy jako root: 
+
+\begin{verbatim}
+# ./install.sh
+\end{verbatim}
+
+Skrypt \file{install.sh} przekopiowuje do \dir{/var/lib/0tdns/}
+oraz do \dir{/usr/sbin/} skrypty wchodzące w skład systemu.
+
+
+Oprócz tego \file{install.sh} umieszcza importowany przez inne skrypty
+\file{ztdns_db_connectivity.py} w \dir{/usr/lib/python3/dist-packages/}
+oraz kopiuje \file{db_connection_config.yml} do katalogu \dir{/etc/0tdns/}.
+
+Programy działające w ramach systemu automatycznie sukają konfiguracji
+systemu pod \filepath{/etc/0tdns/db_connection_config.yml}. Dostarczony plik
+jest domyślną konfiguracją, którą administrator systemu powinien zmodyfikować
+precyzując w niej adekwatny adres bazy danych i inne parametry.
+
+Przy wywołaniu \file{install.sh} można ustawić odpowiednią zmienną środowiskową
+
+\begin{verbatim}
+$ INSTALL_ROOT=/some/path/ ./install.sh
+\end{verbatim}
+
+lub podać argument do skryptu
+
+\begin{verbatim}
+$ ./install.sh /some/path/
+\end{verbatim}
+
+Efekt jest w obu przypadkach taki sam - wszystkie pliki zostaną
+zainstalowane w \dir{/some/path/}, co może zostać wykorzystane do instalacji
+wewnątrz chroot'a lub do stworzenia pakietu dystrybucji.
+
+Po instalacji plików w systemie konieczne jest utworzenie użytkownika
+i dodanie wpisów do crontaba, co wykonać można wywołaniem skryptu
+
+\begin{verbatim}
+# ./setup.sh
+\end{verbatim}
+
+Funkcjonalność \file{setup.sh} i \file{install.sh} została rozdzielona
+z myślą o dystrybucji systemu.
+
+\section{Deinstalacja części back-endowej}
+
+W celu odwrócenia zmian dokonanych przez \file{setup.sh} należy wywołać
+
+\begin{verbatim}
+# ./uninstall.sh
+\end{verbatim}
+
+Jeśli z systemu mają być usunięte także pliki zainstalowane przez skrypt
+\file{install.sh}, można użyć następującej flagi
+
+\begin{verbatim}
+# uninstall.sh --delete-files
+\end{verbatim}
+
+\section{Działanie części back-endowej systemu}
+Demon crona co gdzin uruchamia skrypt \file{hourly.py}, który łączy się
+z bazą (używając funkcji z \file{ztdns_db_connectivity.py}, która czyta
+konfigurację \filepath{/etc/0tdns/db_connection_config.yml}).
+
+Skrypt \file{hourly.py} pobiera z bazy id wszystkich połączeń VPN,
+które nawiąże w celu odpytywania serwerów DNS.
+
+Dla każdego VPN \file{hourly.py} sprawdza, czy jego plik konfiguracyjny
+znajduje się w systemie. Jeżli nie, jest pobierany z bazy i zapisywany
+jako \filepath{/var/lib/0tdns/<sha256_z_zawarto?ci_configu>.ovpn}.
+
+Następnie dla każdego VPN wywoływany jest skrypt \file{vpn_wrapper.sh}
+(nie powinien on być uruchamiany manualnie, a jedynie wywoływany przez
+\file{hourly.py}), któremu jako argumenty podawane są kolejno:
+\begin{easylist}
+  & ścieżka do pliku konfiguracyjnego OpenVPN
+  & fizyczny adres ip systemu (tj. adres źródłowy, który powinny mieć nieroutowane
+  przez VPN datagramy IP)
+  & zawarte w jednym argumencie oddzielone od siebie znakami białymi adresy
+  podsieci, do których ruch nie powinien być routowany przez VPN
+  & polecenie (plik wykonywalny) do uruchomienia wewnątrz namespace'a
+  (jest nim \filepath{/var/lib/0tdns/perform_queries.py}, który również
+  czyta konfigurację 0TDNS i łączy się z bazą danych przed wykonaniem
+  zapytań DNS)
+  & argumenty do programu wykonywanego wewnątrz namespace'u skryptu
+  && godzina wywołania \file{hourly.py}
+  && id VPN w bazie
+\end{easylist}
+  
+Skrypt \file{vpn_wrapper.sh} otwiera połączenie VPN, tworzy namespace,
+przekierowuje ruch z namespace przez VPN i uruchamia podaną komendę wewnątrz
+namespace'a. Po jej zakończeniu zamyka połączenie VPN i usuwa namespace.
+
+\end{sloppypar}
+\end{document}
