@@ -47,6 +47,7 @@ echo nameserver $DEFAULT_DNS > /etc/netns/$NAMESPACE_NAME/resolv.conf
 openvpn --ifconfig-noexec --route-noexec --up $NETNS_SCRIPT \
 	--route-up $NETNS_SCRIPT --down $NETNS_SCRIPT \
 	--config "$OPENVPN_CONFIG" --script-security 2 \
+	--connect-timeout 20 \
 	--setenv NAMESPACE_NAME $NAMESPACE_NAME \
 	--setenv WRAPPER_PID $$ \
 	--setenv VETH_HOST0 $VETH_HOST0 \
