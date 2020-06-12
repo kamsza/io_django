@@ -4,7 +4,7 @@ from sys import argv
 import unbound
 
 # our own module used by several scripts in the project
-from ztdns_db_connectivity import start_db_connection
+from ztdns_db_connectivity import start_db_connection, get_ztdns_config
 
 class dns_queries:
     def __init__(self, dns_IP, dns_id, services):
@@ -30,9 +30,9 @@ def query_planned_queries(cursor, hour, vpn_id):
     #                                                  [100,         "onet.pl"]])
     # ]
     cursor.execute('''
-    SELECT DISTINCT d.IP, d.dns_id
+    SELECT DISTINCT d."IP", d.id
     FROM user_side_queries AS q JOIN user_side_dns AS d
-    ON dns.id = q.dns_id
+    ON d.id = q.dns_id
     WHERE q.vpn_id = %s
     ''', (vpn_id,))
     dnss = cursor.fetchall()
@@ -42,7 +42,7 @@ def query_planned_queries(cursor, hour, vpn_id):
     for dns_IP, dns_id in dnss:
         cursor.execute('''
         SELECT s.id, s.name
-        FROM user_side_services AS s JOIN user_side_queries AS q
+        FROM user_side_service AS s JOIN user_side_queries AS q
         ON s.id = q.service_id
         WHERE q.vpn_id = %s AND q.dns_id = %s
         ''', (vpn_id, dns_id))
@@ -69,7 +69,7 @@ def resolve_call_back(mydata, status, result):
     responses_id = query.cursor.fetchone()[0]
 
     if status==0 and result.havedata:
-        for address in data.address_list:
+        for address in result.data.address_list:
             query.cursor.execute('''
             INSERT INTO user_side_response (returned_ip, responses_id)
             VALUES(%s, %s)
@@ -78,16 +78,18 @@ def resolve_call_back(mydata, status, result):
 
 hour = argv[1]
 vpn_id = argv[2]
-connection = start_db_connection()
+config = get_ztdns_config()
+connection = start_db_connection(config)
 cursor = connection.cursor()
 
 contexts = []
-for dns_query in query_planned_queries(cursor, hour, vpn_id):
+for dns_queries in query_planned_queries(cursor, hour, vpn_id):
     ctx = unbound.ub_ctx()
-    ctx.set_fwd(dns_IP)
-    for service_id, service_name in dns_query.services:
-        print("starting resolution of {} through {}".format(service_name, dns_IP))
-        query = single_query(cursor, vpn_id, dns_query.dns_id, service_id)
+    ctx.set_fwd(dns_queries.dns_IP)
+    for service_id, service_name in dns_queries.services:
+        print("starting resolution of {} through {}".format(service_name,
+                                                            dns_queries.dns_IP))
+        query = single_query(cursor, vpn_id, dns_queries.dns_id, service_id)
         
         ctx.resolve_async(service_name, query, resolve_call_back,
                           unbound.RR_TYPE_A, unbound.RR_CLASS_IN)

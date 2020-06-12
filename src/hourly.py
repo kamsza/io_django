@@ -20,9 +20,11 @@ def sync_ovpn_config(cursor, vpn_id, config_path, config_hash):
     ''', (vpn_id, config_hash))
     
     (config_contents,) = cursor.fetchone()
-    
-    with open(config_path, "w") as config_file:
-        config_file.write(config_contents)
+
+    print(config_contents.tobytes())
+
+    with open(config_path, "wb") as config_file:
+        config_file.write(config_contents.tobytes())
 
 def get_vpn_connections(cursor, hour):
     # return (
@@ -31,9 +33,9 @@ def get_vpn_connections(cursor, hour):
     #     (13,       "./vpngate_public-vpn-229.opengw.net_tcp_443.ovpn")
     # )
     cursor.execute('''
-    select v.id, v.ovpn_config_sha256
-    from user_side_queries as q join user_side_vpn as v
-    on v.id = q.vpn_id;
+    SELECT DISTINCT v.id, v.ovpn_config_sha256
+    FROM user_side_queries AS q JOIN user_side_vpn AS v
+    ON v.id = q.vpn_id;
     ''')
     return cursor.fetchall()
 
@@ -49,8 +51,9 @@ cursor = connection.cursor()
 hour = strftime('%Y-%m-%d %H:00', gmtime())
 
 vpns = get_vpn_connections(cursor, hour)
-
-for vpn_id, config_hash in vpns if vpn_id in ztdns_config['handled_vpns']:
+vpns = [vpn for vpn in vpns if vpn[0] in ztdns_config['handled_vpns']]
+print(vpns)
+for vpn_id, config_hash in vpns:
     config_path = "/var/lib/0tdns/{}.ovpn".format(config_hash)
     if not path.isfile(config_path):
         sync_ovpn_config(cursor, vpn_id, config_path, config_hash)
@@ -58,11 +61,11 @@ for vpn_id, config_hash in vpns if vpn_id in ztdns_config['handled_vpns']:
 cursor.close()
 connection.close()
 
-for vpn_id, config_hash in vpns if vpn_id in ztdns_config['handled_vpns']:
+for vpn_id, config_hash in vpns:
     config_path = "/var/lib/0tdns/{}.ovpn".format(config_hash)
-    physical_ip = get_default_host_address(ztdns_config['database'])
-    route_through_veth = ztdns_config['database'] + "/32"
-    command_in_namespace = [perform_queries, hour, vpn_id]
-    
+    physical_ip = get_default_host_address(ztdns_config['host'])
+    route_through_veth = ztdns_config['host'] + "/32"
+    command_in_namespace = [perform_queries, hour, str(vpn_id)]
+    print('RUNNING OPENVPN FOR {}'.format(vpn_id))
     subprocess.run([wrapper, config_path, physical_ip,
                     route_through_veth] + command_in_namespace)
