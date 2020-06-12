@@ -6,7 +6,8 @@ from os import path
 from time import gmtime, strftime
 
 # our own module used by several scripts in the project
-from ztdns_db_connectivity import start_db_connection, get_default_host_address
+from ztdns_db_connectivity import start_db_connection, \
+    get_default_host_address, get_ztdns_config
 
 wrapper = '/var/lib/0tdns/vpn_wrapper.sh'
 perform_queries = '/var/lib/0tdns/perform_queries.py'
@@ -36,7 +37,11 @@ def get_vpn_connections(cursor, hour):
     ''')
     return cursor.fetchall()
 
-connection = start_db_connection()
+ztdns_config = get_ztdns_config()
+if ztdns_config['enabled'] != 'yes':
+    exit()
+
+connection = start_db_connection(ztdns_config)
 cursor = connection.cursor()
 
 # round down to an hour - this datetime format is one
@@ -55,6 +60,9 @@ connection.close()
 
 for vpn_id, config_hash in vpns:
     config_path = "/var/lib/0tdns/{}.ovpn".format(config_hash)
-    subprocess.run([wrapper, get_default_host_address,
-                    get_default_host_address() + '/32',
-                    config_path, perform_queries, hour, vpn_id])
+    physical_ip = get_default_host_address(ztdns_config['database'])
+    route_through_veth = ztdns_config['database'] + "/32"
+    command_in_namespace = [perform_queries, hour, vpn_id]
+    
+    subprocess.run([wrapper, config_path, physical_ip,
+                    route_through_veth] + command_in_namespace)
