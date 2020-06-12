@@ -3,7 +3,7 @@
 from sys import argv
 import subprocess
 from os import path
-from time import gmtime, strftime
+from time import gmtime, strftime, sleep
 
 # our own module used by several scripts in the project
 from ztdns_db_connectivity import start_db_connection, \
@@ -18,7 +18,7 @@ def sync_ovpn_config(cursor, vpn_id, config_path, config_hash):
     from user_side_vpn
     where id = %s and ovpn_config_sha256 = %s
     ''', (vpn_id, config_hash))
-    
+
     (config_contents,) = cursor.fetchone()
 
     print(config_contents.tobytes())
@@ -44,7 +44,7 @@ with open("/var/log/0tdns.log", "w") as logfile:
     # of the formats accepted by postgres
     hour = strftime('%Y-%m-%d %H:00', gmtime())
     logfile.write("Running for {}\n".format(hour))
-    
+
     ztdns_config = get_ztdns_config()
     if ztdns_config['enabled'] != 'yes':
         logfile.write("0tdns not enabled in the config - exiting\n")
@@ -70,11 +70,20 @@ with open("/var/log/0tdns.log", "w") as logfile:
     cursor.close()
     connection.close()
 
+    subprocesses = []
+    
     for vpn_id, config_hash in vpns:
         config_path = "/var/lib/0tdns/{}.ovpn".format(config_hash)
         physical_ip = get_default_host_address(ztdns_config['host'])
         route_through_veth = ztdns_config['host'] + "/32"
         command_in_namespace = [perform_queries, hour, str(vpn_id)]
         logfile.write("Running connection for vpn {}\n".format(vpn_id))
-        subprocess.run([wrapper, config_path, physical_ip,
-                        route_through_veth] + command_in_namespace)
+        
+        p = subprocess.Popen([wrapper, config_path, physical_ip,
+                              route_through_veth] + command_in_namespace)
+        
+        subprocesses.append(p)
+        sleep(5)
+
+    for p in subprocesses:
+        p.wait()
