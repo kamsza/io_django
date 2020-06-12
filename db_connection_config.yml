@@ -4,3 +4,4 @@ host: "127.0.0.1"
 port: "5432"
 database: "ztdns"
 enabled: no
+handled_vpns: [1, 2]

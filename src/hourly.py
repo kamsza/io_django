@@ -50,7 +50,7 @@ hour = strftime('%Y-%m-%d %H:00', gmtime())
 
 vpns = get_vpn_connections(cursor, hour)
 
-for vpn_id, config_hash in vpns:
+for vpn_id, config_hash in vpns if vpn_id in ztdns_config['handled_vpns']:
     config_path = "/var/lib/0tdns/{}.ovpn".format(config_hash)
     if not path.isfile(config_path):
         sync_ovpn_config(cursor, vpn_id, config_path, config_hash)
@@ -58,7 +58,7 @@ for vpn_id, config_hash in vpns:
 cursor.close()
 connection.close()
 
-for vpn_id, config_hash in vpns:
+for vpn_id, config_hash in vpns if vpn_id in ztdns_config['handled_vpns']:
     config_path = "/var/lib/0tdns/{}.ovpn".format(config_hash)
     physical_ip = get_default_host_address(ztdns_config['database'])
     route_through_veth = ztdns_config['database'] + "/32"
