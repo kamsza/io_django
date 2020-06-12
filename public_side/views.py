@@ -4,6 +4,8 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from public_side.models import CreateUserForm
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 
 # HOME PAGE
 def homepage_view(request, *args, **kwargs):
@@ -44,8 +46,11 @@ def login_view(request, *args, **kwargs):
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            login(request, user)
-            return redirect('user page')
+            if user.is_superuser:
+                return HttpResponseRedirect(reverse('admin:index'))
+            else:
+                login(request, user)
+                return redirect('user page')
         else:
             messages.info(request, 'Username or password is incorrect')
 
