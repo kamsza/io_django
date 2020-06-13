@@ -33,6 +33,7 @@ urlpatterns = [
     path('user_page/profile/', user_side.profile_view, name='user profile'),
     path('user_page/statistics/', user_side.statistics_view, name='user statistics'),
     path('user_page/buy/', user_side.buy_subscription_view, name='buy subscription'),
+    path('user_page/buy_form/', user_side.buy_subscription_form_view, name='buy subscription form'),
 
     path('403/', user_side.error_view, name='error'),
 

@@ -9,7 +9,7 @@ user_dns_list = [
         'label': 'Service 1',
         'name': 'www.service1.pl',
         'status': 'OK',
-        'last_checked': '1.06.2020 r. 18:23'
+        'last_checked': datetime.fromtimestamp(1591038723).strftime('%d-%m-%Y %H:%M:%S')
     },
     {
         'label': 'Service 1',
@@ -33,9 +33,6 @@ user_dns_list = [
 
 # Create your views here.
 def home_page_view(request, *args, **kwargs):
-    context = {
-        'user_dns_list': user_dns_list
-    }
     if not request.user.is_authenticated:
         return render(request, 'user_page/403.html')
 
@@ -58,7 +55,8 @@ def home_page_view(request, *args, **kwargs):
                               'last_checked': registry.date
                               })
 
-    return render(request, "user_page/home.html", {'user_services': {}})
+    return render(request, "user_page/home.html", {'user_services': user_dns_list})
+    # return render(request, "user_page/home.html", {'user_services': {}})
 
 
 def profile_view(request, *args, **kwargs):
@@ -75,6 +73,12 @@ def buy_subscription_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
         return render(request, 'user_page/403.html')
     return render(request, "user_page/buy_subscription.html", {})
+
+def buy_subscription_form_view(request, *args, **kwargs):
+    if not request.user.is_authenticated:
+        return render(request, 'user_page/403.html')
+    return render(request, "user_page/buy_subscription_form.html", {})
+
 
 def error_view(request, *args, **kwargs):
     return render(request, "user_page/403.html", {})

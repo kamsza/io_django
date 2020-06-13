@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from public_side.models import CreateUserForm
+from public_side.forms import CreateUserForm
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
