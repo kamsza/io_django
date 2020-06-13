@@ -38,17 +38,17 @@
           <h4 class="mb-3">Website data</h4>
             <div class="mb-3">
               <label for="Label">Label</label>
-              <input type="text" class="form-control" id="label"  placeholder="How do you want to call service ... (optional)" value="">
+              {{ form.label }}
             </div>
 
 			<div class="mb-3">
               <label for="Label">Web address</label>
-              <input type="url" class="form-control" id="url" placeholder="Valid URL e.g. www.my_service.com" value="" required>
+              {{ form.web_address }}
             </div>
 
 			<div class="mb-3" style="width:100%">
               <label for="Label">IP</label>
-              <input type="text" class="form-control" id="ip" placeholder="Correct IP of your service" value="" required>
+              {{ form.ip }}
             </div>
 
 {#            <h4 class="mb-3" style="padding-top: 50px">DNS</h4>#}

@@ -3,6 +3,7 @@ from datetime import datetime
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.models import User
 from .models import Subscription, Responses, Response
+from .forms import SubscriptionForm
 
 user_dns_list = [
     {
@@ -77,7 +78,12 @@ def buy_subscription_view(request, *args, **kwargs):
 def buy_subscription_form_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
         return render(request, 'user_page/403.html')
-    return render(request, "user_page/buy_subscription_form.html", {})
+
+    form = SubscriptionForm()
+
+    context = {'form': form}
+
+    return render(request, "user_page/buy_subscription_form.html", context)
 
 
 def error_view(request, *args, **kwargs):
