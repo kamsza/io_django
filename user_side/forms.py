@@ -10,7 +10,7 @@ class SubscriptionForm(forms.Form):
                                  widget=forms.TextInput(
                                      attrs={'class': 'form-control', 'placeholder': 'Valid URL e.g. www.my_service.com', 'id': 'url'}))
 
-    ip = forms.CharField(max_length=15,
-                         required=True,
-                         widget=forms.TextInput(
-                             attrs={'class': 'form-control', 'placeholder': 'Correct IP of your service', 'id': 'ip'}))
+    ip = forms.GenericIPAddressField(max_length=15,
+                                     required=True,
+                                     widget=forms.TextInput(
+                                         attrs={'class': 'form-control', 'placeholder': 'Correct IP of your service', 'id': 'ip'}))

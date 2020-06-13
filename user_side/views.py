@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from .models import Subscription, Responses, Response
 from .forms import SubscriptionForm
@@ -75,16 +75,39 @@ def buy_subscription_view(request, *args, **kwargs):
         return render(request, 'user_page/403.html')
     return render(request, "user_page/buy_subscription.html", {})
 
-def buy_subscription_form_view(request, *args, **kwargs):
+def error_view(request, *args, **kwargs):
+    return render(request, "user_page/403.html", {})
+
+def buy_subscription_form_1_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
         return render(request, 'user_page/403.html')
 
     form = SubscriptionForm()
 
-    context = {'form': form}
+    if request.method == 'POST':
+        form = SubscriptionForm(request.POST)
+        if form.is_valid():
+            print(form.data['label'])
+            print(form.data['web_address'])
+            print(form.data['ip'])
+            return redirect('buy subscription form 2')
 
-    return render(request, "user_page/buy_subscription_form.html", context)
+    return render(request, "user_page/buy_subscription_form_1.html", {'form': form})
 
+def buy_subscription_form_2_view(request, *args, **kwargs):
+    if not request.user.is_authenticated:
+        return render(request, 'user_page/403.html')
 
-def error_view(request, *args, **kwargs):
-    return render(request, "user_page/403.html", {})
+    if request.method == 'POST':
+        return redirect('buy subscription form 3')
+
+    return render(request, "user_page/buy_subscription_form_2.html", {})
+
+def buy_subscription_form_3_view(request, *args, **kwargs):
+    if not request.user.is_authenticated:
+        return render(request, 'user_page/403.html')
+
+    if request.method == 'POST':
+        return redirect('buy subscription')
+
+    return render(request, "user_page/buy_subscription_form_3.html", {})

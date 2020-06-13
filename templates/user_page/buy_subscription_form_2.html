@@ -1,0 +1,83 @@
+{% extends "user_page/base.html" %}
+{%  load static %}
+
+{% block header %}
+	<style>
+
+	.my_div {
+        margin-bottom: 5%;
+    }
+
+    button {
+        margin-left: 50%;
+        max-width: 300px;
+        transform: translate(-50%, 0%);
+    }
+
+	</style>
+{% endblock %}
+
+
+{% block sidebar %}
+    <li class="nav-item"><a class="nav-link" href="{% url 'user page' %}">Home</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'user profile' %}">Profile</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'user statistics' %}">Statistics</a></li>
+    <li class="nav-item"><a class="nav-link active" href="{% url 'buy subscription' %}">Buy subscription</a></li>
+{% endblock %}
+
+{% block content %}
+    <form method="POST" action="">
+        {% csrf_token %}
+    <div class="my_div">
+    <div class="py-5 text-center">
+        <h2>Subscribe</h2>
+        <p class="lead">We are honored that you decided to use our service. As a proverb goes, forewarned is forearmed, we believe that our system will help your customers stay safe.</p>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-md-9">
+            <h4 class="mb-3" style="padding-top: 50px">DNS</h4>
+{##}
+{#			 <div class="row">#}
+{#              <div class="col-md-4 mb-3">#}
+{#                <label for="dns_continent">Continent</label>#}
+{#                <select class="custom-select d-block w-100" id="dns_continent" required>#}
+{#                  <option value="">Choose...</option>#}
+{#					<option>All</option>#}
+{#					<option>Asia</option>#}
+{#					<option>Europe</option>#}
+{#					<option>North America</option>#}
+{#                </select>#}
+{#              </div>#}
+{#              <div class="col-md-4 mb-3">#}
+{#                <label for="dns_country">Country</label>#}
+{#                <select class="custom-select d-block w-100" id="dns_country" required>#}
+{#                  <option value="">Choose...</option>#}
+{#				  <option>All</option>#}
+{#				  <option>Canada</option>#}
+{#				  <option>China</option>#}
+{#                  <option>France</option>#}
+{#				  <option>Poland</option>#}
+{#                </select>#}
+{#              </div>#}
+{#              <div class="col-md-4 mb-3">#}
+{#                <label for="dns">DNS</label>#}
+{#                <select class="custom-select d-block w-100" id="dns" required>#}
+{#                  <option value="">Choose...</option>#}
+{#				  <option>All</option>#}
+{#				  <option>DNS_1</option>#}
+{#				  <option>DNS_2</option>#}
+{#                  <option>DNS_3</option>#}
+{#				  <option>DNS_4</option>#}
+{#                </select>#}
+{#              </div>#}
+{#            </div>#}
+        </div>
+      </div>
+    </div>
+        <hr class="mb-4">
+        <button class="btn btn-primary btn-lg btn-block" type="submit">Continue</button>
+    </div>
+    </form>
+{% endblock %}

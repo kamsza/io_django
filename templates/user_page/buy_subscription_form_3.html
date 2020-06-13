@@ -26,6 +26,8 @@
 {% endblock %}
 
 {% block content %}
+    <form method="POST" action="">
+        {% csrf_token %}
     <div class="my_div">
     <div class="py-5 text-center">
         <h2>Subscribe</h2>
@@ -35,62 +37,9 @@
     <div class="container">
       <div class="row">
         <div class="col-md-9">
-          <h4 class="mb-3">Website data</h4>
-            <div class="mb-3">
-              <label for="Label">Label</label>
-              {{ form.label }}
-            </div>
 
-			<div class="mb-3">
-              <label for="Label">Web address</label>
-              {{ form.web_address }}
-            </div>
+			<h4 class="mb-3" style="padding-top: 50px">VPN</h4>
 
-			<div class="mb-3" style="width:100%">
-              <label for="Label">IP</label>
-              {{ form.ip }}
-            </div>
-
-{#            <h4 class="mb-3" style="padding-top: 50px">DNS</h4>#}
-{##}
-{#			 <div class="row">#}
-{#              <div class="col-md-4 mb-3">#}
-{#                <label for="dns_continent">Continent</label>#}
-{#                <select class="custom-select d-block w-100" id="dns_continent" required>#}
-{#                  <option value="">Choose...</option>#}
-{#					<option>All</option>#}
-{#					<option>Asia</option>#}
-{#					<option>Europe</option>#}
-{#					<option>North America</option>#}
-{#                </select>#}
-{#              </div>#}
-{#              <div class="col-md-4 mb-3">#}
-{#                <label for="dns_country">Country</label>#}
-{#                <select class="custom-select d-block w-100" id="dns_country" required>#}
-{#                  <option value="">Choose...</option>#}
-{#				  <option>All</option>#}
-{#				  <option>Canada</option>#}
-{#				  <option>China</option>#}
-{#                  <option>France</option>#}
-{#				  <option>Poland</option>#}
-{#                </select>#}
-{#              </div>#}
-{#              <div class="col-md-4 mb-3">#}
-{#                <label for="dns">DNS</label>#}
-{#                <select class="custom-select d-block w-100" id="dns" required>#}
-{#                  <option value="">Choose...</option>#}
-{#				  <option>All</option>#}
-{#				  <option>DNS_1</option>#}
-{#				  <option>DNS_2</option>#}
-{#                  <option>DNS_3</option>#}
-{#				  <option>DNS_4</option>#}
-{#                </select>#}
-{#              </div>#}
-{#            </div>#}
-{##}
-{##}
-{#			<h4 class="mb-3" style="padding-top: 50px">VPN</h4>#}
-{##}
 {#			 <div class="row">#}
 {#              <div class="col-md-4 mb-3">#}
 {#                <label for="vpn_continent">Continent</label>#}
@@ -131,4 +80,5 @@
         <hr class="mb-4">
         <button class="btn btn-primary btn-lg btn-block" type="submit">Continue</button>
     </div>
+    </form>
 {% endblock %}
