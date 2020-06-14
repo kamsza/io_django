@@ -1,20 +1,25 @@
 {% extends "user_page/base.html" %}
-{%  load static %}
+{% load static %}
 
 {% block header %}
-	<style>
+    <style>
 
-	.my_div {
-        margin-bottom: 5%;
-    }
+        .my_div {
+            margin-bottom: 5%;
+        }
 
-    button {
-        margin-left: 50%;
-        max-width: 300px;
-        transform: translate(-50%, 0%);
-    }
+        .checkboxes {
+            margin-top: 20px;
+            margin-left:20px;
+        }
 
-	</style>
+        button {
+            margin-left: 50%;
+            max-width: 300px;
+            transform: translate(-50%, 0%);
+        }
+
+    </style>
 {% endblock %}
 
 
@@ -28,56 +33,63 @@
 {% block content %}
     <form method="POST" action="">
         {% csrf_token %}
-    <div class="my_div">
-    <div class="py-5 text-center">
-        <h2>Subscribe</h2>
-        <p class="lead">We are honored that you decided to use our service. As a proverb goes, forewarned is forearmed, we believe that our system will help your customers stay safe.</p>
-    </div>
+        <div class="my_div">
 
-    <div class="container">
-      <div class="row">
-        <div class="col-md-9">
-            <h4 class="mb-3" style="padding-top: 50px">DNS</h4>
-{##}
-{#			 <div class="row">#}
-{#              <div class="col-md-4 mb-3">#}
-{#                <label for="dns_continent">Continent</label>#}
-{#                <select class="custom-select d-block w-100" id="dns_continent" required>#}
-{#                  <option value="">Choose...</option>#}
-{#					<option>All</option>#}
-{#					<option>Asia</option>#}
-{#					<option>Europe</option>#}
-{#					<option>North America</option>#}
-{#                </select>#}
-{#              </div>#}
-{#              <div class="col-md-4 mb-3">#}
-{#                <label for="dns_country">Country</label>#}
-{#                <select class="custom-select d-block w-100" id="dns_country" required>#}
-{#                  <option value="">Choose...</option>#}
-{#				  <option>All</option>#}
-{#				  <option>Canada</option>#}
-{#				  <option>China</option>#}
-{#                  <option>France</option>#}
-{#				  <option>Poland</option>#}
-{#                </select>#}
-{#              </div>#}
-{#              <div class="col-md-4 mb-3">#}
-{#                <label for="dns">DNS</label>#}
-{#                <select class="custom-select d-block w-100" id="dns" required>#}
-{#                  <option value="">Choose...</option>#}
-{#				  <option>All</option>#}
-{#				  <option>DNS_1</option>#}
-{#				  <option>DNS_2</option>#}
-{#                  <option>DNS_3</option>#}
-{#				  <option>DNS_4</option>#}
-{#                </select>#}
-{#              </div>#}
-{#            </div>#}
+            {# header #}
+            <div class="py-5 text-center">
+                <h2>Subscribe</h2>
+                <p class="lead">We are honored that you decided to use our service. As a proverb goes, forewarned is forearmed, we believe that our
+                    system will help your customers stay safe.</p>
+            </div>
+            <div class="container">
+                {# title #}
+                <h4 class="mb-3" style="padding-top: 50px">DNS</h4>
+
+                {# filters #}
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="dns_continent">Continent</label>
+                        <select class="custom-select d-block w-100" name="dns_continent" id="dns_continent">
+                            <option value="">Choose...</option>
+                            <option>All</option>
+                            <option>Asia</option>
+                            <option>Europe</option>
+                            <option>North America</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="dns_country">Country</label>
+                        <select class="custom-select d-block w-100" name="dns_country"  id="dns_country">
+                            <option value="">Choose...</option>
+                            <option>All</option>
+                            <option>Canada</option>
+                            <option>China</option>
+                            <option>France</option>
+                            <option>Poland</option>
+                        </select>
+                    </div>
+                </div>
+                {#  checkboxes #}
+                <div class="checkboxes">
+                    <label style="white-space: pre;  font-family: monospace; font-size: 14px; font-weight: bold;">{{ form.title }}</label>
+                    <div class="row">
+                        <div class="row">
+                            {% for checkbox in  form.multiple_checkboxes %}
+                                <div class="col-md-9">
+                                    <label>
+                                        {{ checkbox.tag }}
+                                        <label style="white-space: pre; font-family: monospace; font-size: 14px;">{{ checkbox.choice_label }} </label>
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {# button #}
+            <hr class="mb-4">
+            <button class="btn btn-primary btn-lg btn-block" type="submit">Continue</button>
         </div>
-      </div>
-    </div>
-        <hr class="mb-4">
-        <button class="btn btn-primary btn-lg btn-block" type="submit">Continue</button>
-    </div>
     </form>
 {% endblock %}
