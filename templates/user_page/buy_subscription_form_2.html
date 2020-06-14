@@ -46,28 +46,18 @@
                 <h4 class="mb-3" style="padding-top: 50px">DNS</h4>
 
                 {# filters #}
-
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="dns_continent">Continent</label>
-                        <select class="custom-select d-block w-100" name="dns_continent" id="dns_continent">
-                            <option value="">Choose...</option>
-                            <option>All</option>
-                            <option>Asia</option>
-                            <option>Europe</option>
-                            <option>North America</option>
-                        </select>
+                        {{ form.continent_choice }}
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="dns_country">Country</label>
-                        <select class="custom-select d-block w-100" name="dns_country"  id="dns_country">
-                            <option value="">Choose...</option>
-                            <option>All</option>
-                            <option>Canada</option>
-                            <option>China</option>
-                            <option>France</option>
-                            <option>Poland</option>
-                        </select>
+                        {{ form.country_choice }}
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label ></label>
+                        <button class="btn btn-secondary  btn-block" name="filter" type="submit" style="margin-top:7px">filter</button>
                     </div>
                 </div>
                 {#  checkboxes #}
@@ -89,7 +79,7 @@
             </div>
             {# button #}
             <hr class="mb-4">
-            <button class="btn btn-primary btn-lg btn-block" type="submit">Continue</button>
+            <button class="btn btn-primary btn-lg btn-block" name="continue" type="submit">Continue</button>
         </div>
     </form>
 {% endblock %}

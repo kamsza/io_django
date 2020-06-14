@@ -32,6 +32,7 @@ user_dns_list = [
     }
 ]
 
+
 # Create your views here.
 def home_page_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
@@ -65,18 +66,22 @@ def profile_view(request, *args, **kwargs):
         return render(request, 'user_page/403.html')
     return render(request, "user_page/profile.html", {})
 
+
 def statistics_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
         return render(request, 'user_page/403.html')
     return render(request, "user_page/statistics.html", {})
+
 
 def buy_subscription_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
         return render(request, 'user_page/403.html')
     return render(request, "user_page/buy_subscription.html", {})
 
+
 def error_view(request, *args, **kwargs):
     return render(request, "user_page/403.html", {})
+
 
 def buy_subscription_form_1_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
@@ -94,6 +99,7 @@ def buy_subscription_form_1_view(request, *args, **kwargs):
 
     return render(request, "user_page/buy_subscription_form_1.html", {'form': form})
 
+
 def buy_subscription_form_2_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
         return render(request, 'user_page/403.html')
@@ -101,17 +107,24 @@ def buy_subscription_form_2_view(request, *args, **kwargs):
     form = SubscriptionForm2()
 
     if request.method == 'POST':
-        if request.POST.get("dns_continent"):
-            print('continent')
-        elif request.POST.get("dns_country"):
-            print('country')
+        print('POST CAUGHT')
+        print(request.POST)
+        form = SubscriptionForm2(request.POST)
+        if 'filter' in request.POST:
+            print('filter')
+            if form.is_valid():
+                print('valid')
+                print(form.cleaned_data['continent_choice'])
+                print(form.cleaned_data['country_choice'])
         else:
+            print('else')
             form = SubscriptionForm2(request.POST)
             if form.is_valid():
                 print(form.cleaned_data['multiple_checkboxes'])
                 return redirect('buy subscription form 3')
 
     return render(request, "user_page/buy_subscription_form_2.html", {'form': form})
+
 
 def buy_subscription_form_3_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
