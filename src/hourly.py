@@ -71,17 +71,27 @@ with open("/var/log/0tdns.log", "w") as logfile:
     connection.close()
 
     parallel_vpns = ztdns_config['parallel_vpns']
-    vpn_wrapper_pids = set()
-    
+    pids_vpns = {} # map each wrapper pid to id of the vpn it connects to
+
+    def wait_for_wrapper_process():
+        while True:
+            pid, exit_status = waitpid(0, 0)
+            # make sure 
+            if pids_vpns.get(pid) is not None:
+                break
+        if exit_status == 2:
+            # this means our perform_queries.py crashed... not good
+            logfile.write('performing queries through vpn {} failed\n'\
+                          .format(pids_vpns[pid]))
+        elif exit_status != 0:
+            # vpn server is probably not responding
+            logfile.write('connection to vpn {} failed\n'\
+                          .format(pids_vpns[pid]))
+        pids_vpns.pop(pid)
+
     for vpn_id, config_hash in vpns:
-        if len(vpn_wrapper_pids) == parallel_vpns:
-            while True:
-                pid, exit_status = waitpid(0, 0)
-                if pid in vpn_wrapper_pids:
-                    break
-            if exit_status != 0: 
-                logfile.write("one of vpn connections failed")
-            vpn_wrapper_pids.remove(pid)
+        if len(pids_vpns) == parallel_vpns:
+            wait_for_wrapper_process()
 
         config_path = "/var/lib/0tdns/{}.ovpn".format(config_hash)
         physical_ip = get_default_host_address(ztdns_config['host'])
@@ -92,7 +102,7 @@ with open("/var/log/0tdns.log", "w") as logfile:
         p = subprocess.Popen([wrapper, config_path, physical_ip,
                               route_through_veth] + command_in_namespace)
 
-        vpn_wrapper_pids.add(p.pid)
+        pids_vpns[p.pid] = vpn_id
 
-    for pid in vpn_wrapper_pids:
-        waitpid(pid, 0)
+    while len(pids_vpns) > 0:
+        wait_for_wrapper_process()
