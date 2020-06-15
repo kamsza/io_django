@@ -39,7 +39,7 @@ def get_vpn_connections(cursor, hour):
     ''')
     return cursor.fetchall()
 
-with open("/var/log/0tdns.log", "w") as logfile:
+with open("/var/log/0tdns.log", "a") as logfile:
     # round down to an hour - this datetime format is one
     # of the formats accepted by postgres
     hour = strftime('%Y-%m-%d %H:00', gmtime())
