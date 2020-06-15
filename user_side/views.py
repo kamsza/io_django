@@ -104,18 +104,13 @@ def buy_subscription_form_2_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
         return render(request, 'user_page/403.html')
 
-    form = SubscriptionForm2()
-
     if request.method == 'POST':
-        print('POST CAUGHT')
-        print(request.POST)
         form = SubscriptionForm2(request.POST)
         if 'filter' in request.POST:
-            print('filter')
-            if form.is_valid():
-                print('valid')
-                print(form.cleaned_data['continent_choice'])
-                print(form.cleaned_data['country_choice'])
+            continent = request.POST.get('continent_choice')
+            country = request.POST.get('country_choice')
+            new_form = SubscriptionForm2(continent=continent, country=country)
+            return render(request, "user_page/buy_subscription_form_2.html", {'form': new_form})
         else:
             print('else')
             form = SubscriptionForm2(request.POST)
@@ -123,6 +118,7 @@ def buy_subscription_form_2_view(request, *args, **kwargs):
                 print(form.cleaned_data['multiple_checkboxes'])
                 return redirect('buy subscription form 3')
 
+    form = SubscriptionForm2()
     return render(request, "user_page/buy_subscription_form_2.html", {'form': form})
 
 
