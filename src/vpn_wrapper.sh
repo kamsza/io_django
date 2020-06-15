@@ -66,20 +66,35 @@ OPENVPN_PID=$!
 trap true usr1
 
 # wait on openvpn process;
-# if we get a signal - wait will terminate;
-# if openvpn process dies - wait will also terminate
+# if we get sigusr1 from netns-script - wait will
+# terminate with 138 (128 + signal number);
+# if openvpn process dies - wait will also terminate,
+# but with openvpn's exit value
 wait $OPENVPN_PID
 
-# TODO check which of 2 above mention situations occured and
-# return from script with error code if openvpn process died
+if [ $? = 138 ]; then
+    # we received sigusr1 from netns-script, namespace is ready
 
-# run the provided command inside newly created namespace
-# under '0tdns' user;
-sudo ip netns exec $NAMESPACE_NAME sudo -u 0tdns "$@"
+    # run the provided command inside newly created namespace
+    # under '0tdns' user;
+    sudo ip netns exec $NAMESPACE_NAME sudo -u 0tdns "$@"
 
-# close the connection
-kill $OPENVPN_PID
-wait $OPENVPN_PID
+    if [ $? = 0 ]; then
+	RETVAL=0
+    else
+	RETVAL=2
+    fi
+    
+    # close the connection
+    kill $OPENVPN_PID
+    wait $OPENVPN_PID
+else
+    RETVAL=1
+fi
 
 # we no longer need those
 rm -r /etc/netns/$NAMESPACE_NAME/
+
+# return 0 on success, 1 on failed vpn connection,
+# 2 on problems within the program we ran in the namespace
+exit $RETVAL
