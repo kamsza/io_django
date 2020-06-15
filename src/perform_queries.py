@@ -61,11 +61,18 @@ def resolve_call_back(mydata, status, result):
     query = mydata
     # debugging
     print("callback called for {}".format(result.qname))
-    if status==0 and result.havedata:
+    if status != 0:
+        result_info = 'internal failure: out of memory'
+    elif result.rcode == 0:
         result_info = 'successful'
         print("Result:",result.data.address_list)
+    elif result.rcode == 2:
+        result_info = 'no response'
+    elif result.rcode == 3:
+        result_info = 'not exists'
     else:
-        result_info = 'not found'
+        result_info = 'DNS error: {}'.format(result.rcode_str)
+
     # write to database
     try:
         query.cursor.execute('''
