@@ -15,7 +15,8 @@ class dns_queries:
         self.services = services
 
 class single_query:
-    def __init__(self, cursor, vpn_id, dns_id, service_id):
+    def __init__(self, hour, cursor, vpn_id, dns_id, service_id):
+        self.hour = hour
         self.cursor = cursor
         self.vpn_id = vpn_id
         self.dns_id = dns_id
@@ -67,9 +68,10 @@ def resolve_call_back(mydata, status, result):
     # write to database
     query.cursor.execute('''
     INSERT INTO user_side_responses (date, result, dns_id, service_id, vpn_id)
-    VALUES (current_timestamp, %s, %s, %s, %s)
+    VALUES (%s, %s, %s, %s, %s)
     RETURNING id
-    ''', (result_info, query.dns_id, query.service_id, query.vpn_id))
+    ''', (query.hour, result_info, query.dns_id,
+          query.service_id, query.vpn_id))
 
     responses_id = query.cursor.fetchone()[0]
 
@@ -93,7 +95,8 @@ def query_dns(dns_queries):
     for service_id, service_name in dns_queries.services:
         print("starting resolution of {} through {}".format(service_name,
                                                             dns_queries.dns_IP))
-        query = single_query(cursor, vpn_id, dns_queries.dns_id, service_id)
+        query = single_query(hour, cursor, vpn_id,
+                             dns_queries.dns_id, service_id)
         
         ctx.resolve_async(service_name, query, resolve_call_back,
                           unbound.RR_TYPE_A, unbound.RR_CLASS_IN)
