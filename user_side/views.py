@@ -105,14 +105,12 @@ def buy_subscription_form_2_view(request, *args, **kwargs):
         return render(request, 'user_page/403.html')
 
     if request.method == 'POST':
-        form = SubscriptionForm2(request.POST)
         if 'filter' in request.POST:
             continent = request.POST.get('continent_choice')
             country = request.POST.get('country_choice')
             new_form = SubscriptionForm2(continent=continent, country=country)
             return render(request, "user_page/buy_subscription_form_2.html", {'form': new_form})
         else:
-            print('else')
             form = SubscriptionForm2(request.POST)
             if form.is_valid():
                 print(form.cleaned_data['multiple_checkboxes'])

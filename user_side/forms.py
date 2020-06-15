@@ -34,6 +34,12 @@ class SubscriptionForm2(forms.Form):
     continent_choice = forms.ChoiceField()
     country_choice = forms.ChoiceField()
     multiple_checkboxes = forms.MultipleChoiceField()
+    user_dns_ip = forms.GenericIPAddressField(max_length=15,
+                                     required=False,
+                                     widget=forms.TextInput(
+                                         attrs={'class': 'form-control', 'placeholder': 'Correct IP of DNS', 'id': 'dns_ip'}))
+
+
 
 def get_location(kwargs):
     continent_set = set()

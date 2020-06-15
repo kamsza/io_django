@@ -43,7 +43,8 @@
             </div>
             <div class="container">
                 {# title #}
-                <h4 class="mb-3" style="padding-top: 50px">DNS</h4>
+                <h3 class="mb-3" style="padding-top: 50px">DNS</h3>
+                <p class="lead" style="font-size: 18px">Choose which DSN servers you want us to check for you. You can add additional servers that you have knowledge of, and they will be also checked.</p>
 
                 {# filters #}
                 <div class="row">
@@ -74,6 +75,20 @@
                                 </div>
                             {% endfor %}
                         </div>
+                    </div>
+                </div>
+
+                {# user's dns #}
+                <div class="row">
+                    <div class="col-md-2 mb-3" style="margin-top:15px">
+                        <label>DNS: </label>
+                    </div>
+                    <div class="col-md-4 mb-3" style="margin-top:15px">
+                        {{ form.user_dns_ip }}
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label ></label>
+                        <button class="btn btn-secondary  btn-block" name="add" type="submit" style="margin-top:-10px">add</button>
                     </div>
                 </div>
             </div>

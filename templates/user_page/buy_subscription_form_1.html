@@ -26,18 +26,17 @@
 {% endblock %}
 
 {% block content %}
-    <form method="POST" action="">
-        {% csrf_token %}
     <div class="my_div">
     <div class="py-5 text-center">
         <h2>Subscribe</h2>
         <p class="lead">We are honored that you decided to use our service. As a proverb goes, forewarned is forearmed, we believe that our system will help your customers stay safe.</p>
     </div>
-
+    <form method="POST" action="">
+        {% csrf_token %}
     <div class="container">
       <div class="row">
         <div class="col-md-9">
-          <h4 class="mb-3">Website data</h4>
+          <h3 class="mb-3">Website data</h3>
             <div class="mb-3">
               <label for="Label">Label</label>
               {{ form.label }}
