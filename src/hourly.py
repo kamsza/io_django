@@ -42,7 +42,7 @@ def get_vpn_connections(cursor, hour):
 with open("/var/log/0tdns.log", "a") as logfile:
     # round down to an hour - this datetime format is one
     # of the formats accepted by postgres
-    hour = strftime('%Y-%m-%d %H:00', gmtime())
+    hour = strftime('%Y-%m-%d %H:00%z', gmtime())
     logfile.write("Running for {}\n".format(hour))
 
     ztdns_config = get_ztdns_config()
