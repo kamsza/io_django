@@ -103,18 +103,27 @@ def buy_subscription_form_1_view(request, *args, **kwargs):
 def buy_subscription_form_2_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
         return render(request, 'user_page/403.html')
-
+    print(request.POST)
     if request.method == 'POST':
         if 'filter' in request.POST:
             continent = request.POST.get('continent_choice')
             country = request.POST.get('country_choice')
-            new_form = SubscriptionForm2(continent=continent, country=country)
-            return render(request, "user_page/buy_subscription_form_2.html", {'form': new_form})
+            form = SubscriptionForm2(request.POST)
+            form.filter(continent, country)
+            return render(request, "user_page/buy_subscription_form_2.html", {'form': form})
+        elif 'add' in request.POST:
+            dns_ip = request.POST.get('user_dns_ip')
+            form = SubscriptionForm2(request.POST)
+            form.add_user_dns(dns_ip)
+            return render(request, "user_page/buy_subscription_form_2.html", {'form': form})
         else:
             form = SubscriptionForm2(request.POST)
+            print(form.fields['multiple_checkboxes'])
             if form.is_valid():
                 print(form.cleaned_data['multiple_checkboxes'])
                 return redirect('buy subscription form 3')
+            else:
+                print(form.errors)
 
     form = SubscriptionForm2()
     return render(request, "user_page/buy_subscription_form_2.html", {'form': form})

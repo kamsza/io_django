@@ -47,6 +47,8 @@
                 <p class="lead" style="font-size: 18px">Choose which DSN servers you want us to check for you. You can add additional servers that you have knowledge of, and they will be also checked.</p>
 
                 {# filters #}
+                <h4 class="mb-3" style="padding-top: 50px">Available DNS servers</h4>
+
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="dns_continent">Continent</label>
@@ -79,16 +81,21 @@
                 </div>
 
                 {# user's dns #}
+                <h4 class="mb-3" style="padding-top: 50px">Your DNS servers (optional)</h4>
+                <ul>
+                    {% for user_dns in form.user_dns_list %}
+                        <li style="font-family: monospace; font-size: 14px;">{{ user_dns }}</li>
+                    {% endfor %}
+                </ul>
                 <div class="row">
-                    <div class="col-md-2 mb-3" style="margin-top:15px">
-                        <label>DNS: </label>
+                    <div class="col-md-2 mb-3" style="margin-top:20px">
+                        <label>Additional DNS: </label>
                     </div>
                     <div class="col-md-4 mb-3" style="margin-top:15px">
                         {{ form.user_dns_ip }}
                     </div>
-                    <div class="col-md-2 mb-3">
-                        <label ></label>
-                        <button class="btn btn-secondary  btn-block" name="add" type="submit" style="margin-top:-10px">add</button>
+                    <div class="col-md-1 mb-3">
+                        <button class="btn btn-secondary  btn-block" name="add" type="submit" style="margin-top:15px">add</button>
                     </div>
                 </div>
             </div>
