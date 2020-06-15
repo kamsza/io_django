@@ -67,9 +67,6 @@ with open("/var/log/0tdns.log", "a") as logfile:
                           .format(vpn_id, config_hash))
             sync_ovpn_config(cursor, vpn_id, config_path, config_hash)
 
-    cursor.close()
-    connection.close()
-
     parallel_vpns = ztdns_config['parallel_vpns']
     pids_vpns = {} # map each wrapper pid to id of the vpn it connects to
 
@@ -106,3 +103,19 @@ with open("/var/log/0tdns.log", "a") as logfile:
 
     while len(pids_vpns) > 0:
         wait_for_wrapper_process()
+
+    cursor.execute('''
+    INSERT INTO user_side_responses(date, result, dns_id, service_id, vpn_id)
+    (SELECT TIMESTAMP WITH TIME ZONE %s,
+            'internal failure: vpn_connection_failure',
+            q.dns_id, q.service_id, q.vpn_id
+     FROM user_side_responses AS r RIGHT JOIN user_side_queries AS q
+          ON q.service_id = r.service_id AND
+             q.dns_id = r.dns_id AND
+             q.vpn_id = r.vpn_id AND
+             date = %s
+     WHERE r.id IS NULL);
+    ''', (hour, hour))
+
+    cursor.close()
+    connection.close()
