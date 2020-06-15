@@ -1,6 +1,6 @@
 from django import forms
 from .models import DNS, Location
-
+import concurrent.futures
 
 class SubscriptionForm(forms.Form):
     label = forms.CharField(max_length=40,
@@ -21,8 +21,11 @@ class SubscriptionForm(forms.Form):
 class SubscriptionForm2(forms.Form):
     def __init__(self, *args, **kwargs):
         super(SubscriptionForm2, self).__init__()
-        continent_list, country_list = get_location(kwargs)
-        dns_checklist = get_dnses(kwargs)
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            ex1 = executor.submit(get_location, kwargs)
+            ex2 = executor.submit(get_dnses, kwargs)
+            continent_list, country_list = ex1.result()
+            dns_checklist = ex2.result()
         self.fields['continent_choice'].widget = forms.Select(choices=continent_list, attrs={'class': 'custom-select d-block w-100', 'id': 'dns_continent'})
         self.fields['country_choice'].widget = forms.Select(choices=country_list, attrs={'class': 'custom-select d-block w-100', 'id': 'dns_continent'})
         self.fields['multiple_checkboxes'].widget = forms.CheckboxSelectMultiple(choices=dns_checklist)
@@ -54,7 +57,7 @@ def get_location(kwargs):
         for location in location_list:
             country_set.add(location.country)
         country_list = [('All', 'All')] + [(c, c) for c in sorted(country_set)] + [('All', ''), ('All', 'All')] + all_countries_list
-        continent_list = [(chosen_continent, chosen_continent)] + [('All', '')] + all_continents_list
+        continent_list = [(chosen_continent, chosen_continent)] + [('All', ''), ('All', 'All')] + all_continents_list
     else:
         country_list =[('All', 'All')] + all_countries_list
         continent_list =[('All', 'All')] + all_continents_list
