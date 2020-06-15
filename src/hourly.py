@@ -2,7 +2,7 @@
 
 from sys import argv
 import subprocess
-from os import path
+from os import path, waitpid
 from time import gmtime, strftime, sleep
 
 # our own module used by several scripts in the project
@@ -70,9 +70,19 @@ with open("/var/log/0tdns.log", "w") as logfile:
     cursor.close()
     connection.close()
 
-    subprocesses = []
+    parallel_vpns = ztdns_config['parallel_vpns']
+    vpn_wrapper_pids = set()
     
     for vpn_id, config_hash in vpns:
+        if len(vpn_wrapper_pids) == parallel_vpns:
+            while True:
+                pid, exit_status = waitpid(0, 0)
+                if pid in vpn_wrapper_pids:
+                    break
+            if exit_status != 0: 
+                logfile.write("one of vpn connections failed")
+            vpn_wrapper_pids.remove(pid)
+
         config_path = "/var/lib/0tdns/{}.ovpn".format(config_hash)
         physical_ip = get_default_host_address(ztdns_config['host'])
         route_through_veth = ztdns_config['host'] + "/32"
@@ -81,9 +91,8 @@ with open("/var/log/0tdns.log", "w") as logfile:
         
         p = subprocess.Popen([wrapper, config_path, physical_ip,
                               route_through_veth] + command_in_namespace)
-        
-        subprocesses.append(p)
-        sleep(5)
 
-    for p in subprocesses:
-        p.wait()
+        vpn_wrapper_pids.add(p.pid)
+
+    for pid in vpn_wrapper_pids:
+        waitpid(pid, 0)
