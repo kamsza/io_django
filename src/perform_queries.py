@@ -1,6 +1,8 @@
 #!/bin/python3
 
 from sys import argv
+from threading import Thread
+from time import sleep
 import unbound
 
 # our own module used by several scripts in the project
@@ -85,8 +87,7 @@ config = get_ztdns_config()
 connection = start_db_connection(config)
 cursor = connection.cursor()
 
-contexts = []
-for dns_queries in query_planned_queries(cursor, hour, vpn_id):
+def query_dns(dns_queries):
     ctx = unbound.ub_ctx()
     ctx.set_fwd(dns_queries.dns_IP)
     for service_id, service_name in dns_queries.services:
@@ -96,10 +97,18 @@ for dns_queries in query_planned_queries(cursor, hour, vpn_id):
         
         ctx.resolve_async(service_name, query, resolve_call_back,
                           unbound.RR_TYPE_A, unbound.RR_CLASS_IN)
-    contexts.append(ctx)
+        sleep(0.4)
 
-for ctx in contexts:
     ctx.wait()
+
+threads = []
+for dns_queries in query_planned_queries(cursor, hour, vpn_id):
+    thread = Thread(target = query_dns, args = (dns_queries,))
+    thread.start()
+    threads.append(thread)
+
+for thread in threads:
+    thread.join()
 
 cursor.close()
 connection.close()
