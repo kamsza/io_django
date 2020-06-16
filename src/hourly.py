@@ -6,6 +6,8 @@ from os import path, waitpid, unlink
 from time import gmtime, strftime, sleep
 import re
 
+import psycopg2
+
 # our own module used by several scripts in the project
 from ztdnslib import start_db_connection, \
     get_default_host_address, get_ztdns_config
@@ -190,14 +192,31 @@ def do_hourly_work(hour, logfile):
             if subnet:
                 break
 
-        if exit_status == 2:
-            # this means our perform_queries.py crashed... not good
-            logfile.write('performing queries through vpn {} failed\n'\
-                          .format(vpn_id))
-        elif exit_status != 0:
-            # vpn server is probably not responding
-            logfile.write('connection to vpn {} failed\n'\
-                          .format(vpn_id))
+        if exit_status != 0:
+            if exit_status == 2:
+                # this means our perform_queries.py crashed... not good
+                logfile.write('performing queries through vpn {} failed\n'\
+                              .format(vpn_id))
+                result_info = 'internal failure: process_crash'
+            else:
+                # vpn server is probably not responding
+                logfile.write('connection to vpn {} failed\n'\
+                              .format(vpn_id))
+                result_info = 'internal failure: vpn_connection_failure'
+
+            try:
+                cursor.execute('''
+                INSERT INTO user_side_responses
+                    (date, result, dns_id, service_id, vpn_id)
+                (SELECT TIMESTAMP WITH TIME ZONE %s, %s,
+                        dns_id, service_id, vpn_id
+                FROM user_side_queries
+                WHERE vpn_id = %s);
+                ''', (hour, result_info, vpn_id))
+            except psycopg2.IntegrityError:
+                logfile.write('results already exist for vpn {}\n'\
+                              .format(vpn_id))
+
         pids_wrappers.pop(pid)
         subnets.add(subnet)
 
@@ -226,19 +245,6 @@ def do_hourly_work(hour, logfile):
 
     while len(pids_wrappers) > 0:
         wait_for_wrapper_process()
-
-    cursor.execute('''
-    INSERT INTO user_side_responses(date, result, dns_id, service_id, vpn_id)
-    (SELECT TIMESTAMP WITH TIME ZONE %s,
-            'internal failure: vpn_connection_failure',
-            q.dns_id, q.service_id, q.vpn_id
-     FROM user_side_responses AS r RIGHT JOIN user_side_queries AS q
-          ON q.service_id = r.service_id AND
-             q.dns_id = r.dns_id AND
-             q.vpn_id = r.vpn_id AND
-             date = %s
-     WHERE r.id IS NULL AND q.vpn_id = ANY(%s));
-    ''', (hour, hour, handled_vpns))
 
     cursor.close()
     connection.close()
