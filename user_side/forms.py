@@ -1,5 +1,5 @@
 from django import forms
-from .models import DNS, Location
+from .models import DNS, VPN, Location
 import concurrent.futures
 
 
@@ -33,7 +33,7 @@ class SubscriptionForm2(forms.Form):
     def __init__(self, *args, **kwargs):
         super(SubscriptionForm2, self).__init__(*args, **kwargs)
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            ex1 = executor.submit(get_location, None, None)
+            ex1 = executor.submit(get_location_dns, None, None)
             ex2 = executor.submit(get_dnses, None, None)
             self.continent_list, self.country_list = ex1.result()
             self.dns_checklist = ex2.result()
@@ -46,7 +46,7 @@ class SubscriptionForm2(forms.Form):
 
     def filter(self, continent, country):
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            ex1 = executor.submit(get_location, continent, country)
+            ex1 = executor.submit(get_location_dns, continent, country)
             ex2 = executor.submit(get_dnses, continent, country)
             self.continent_list, self.country_list = ex1.result()
             self.dns_checklist = ex2.result()
@@ -55,7 +55,17 @@ class SubscriptionForm2(forms.Form):
         self.fields['multiple_checkboxes'].choices = self.dns_checklist
 
 
-def get_location(continent, country):
+class SubscriptionForm3(forms.Form):
+    title = '{:30.25} {:30.25}'.format('CONTINENT', 'COUNTRY')
+    vpn_checklist = []
+    for vpn in VPN.objects.order_by('location__continent', 'location__country'):
+        label = '{:30.25} {:30.25}'.format(vpn.location.continent, vpn.location.country)
+        vpn_checklist.append((vpn.id, label))
+    multiple_checkboxes = forms.MultipleChoiceField(choices=vpn_checklist, widget=forms.CheckboxSelectMultiple())
+    vpn_file = forms.FileField()
+
+
+def get_location_dns(continent, country):
     continent_set = set()
     country_set = set()
     for location in Location.objects.all():
@@ -79,7 +89,6 @@ def get_location(continent, country):
     else:
         country_list = [('All', 'All')] + all_countries_list
         continent_list = [('All', 'All')] + all_continents_list
-
     return continent_list, country_list
 
 
@@ -95,3 +104,5 @@ def get_dnses(continent, country):
         label = '{:45.43} {:15.15} {:15.12} {:15.12}'.format(dns.label, dns.IP, dns.location.continent, dns.location.country)
         dns_checklist.append((dns, label))
     return dns_checklist
+
+

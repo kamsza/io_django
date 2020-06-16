@@ -3,7 +3,7 @@ from datetime import datetime
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from .models import Subscription, Responses, Response
-from .forms import SubscriptionForm, SubscriptionForm2
+from .forms import SubscriptionForm, SubscriptionForm2, SubscriptionForm3
 
 user_dns_list = [
     {
@@ -121,6 +121,7 @@ def buy_subscription_form_2_view(request, *args, **kwargs):
             print(form.fields['multiple_checkboxes'])
             if form.is_valid():
                 print(form.cleaned_data['multiple_checkboxes'])
+                print(form.user_dns_list)
                 return redirect('buy subscription form 3')
             else:
                 print(form.errors)
@@ -136,4 +137,5 @@ def buy_subscription_form_3_view(request, *args, **kwargs):
     if request.method == 'POST':
         return redirect('buy subscription')
 
-    return render(request, "user_page/buy_subscription_form_3.html", {})
+    form = SubscriptionForm3()
+    return render(request, "user_page/buy_subscription_form_3.html", {'form': form})

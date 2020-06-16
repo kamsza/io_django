@@ -1,20 +1,25 @@
 {% extends "user_page/base.html" %}
-{%  load static %}
+{% load static %}
 
 {% block header %}
-	<style>
+    <style>
 
-	.my_div {
-        margin-bottom: 5%;
-    }
+        .my_div {
+            margin-bottom: 5%;
+        }
 
-    button {
-        margin-left: 50%;
-        max-width: 300px;
-        transform: translate(-50%, 0%);
-    }
+        .checkboxes {
+            margin-top: 20px;
+            margin-left:20px;
+        }
 
-	</style>
+        button {
+            margin-left: 50%;
+            max-width: 300px;
+            transform: translate(-50%, 0%);
+        }
+
+    </style>
 {% endblock %}
 
 
@@ -28,46 +33,52 @@
 {% block content %}
     <form method="POST" action="">
         {% csrf_token %}
-    <div class="my_div">
-    <div class="py-5 text-center">
-        <h2>Subscribe</h2>
-        <p class="lead">We are honored that you decided to use our service. As a proverb goes, forewarned is forearmed, we believe that our system will help your customers stay safe.</p>
-    </div>
+        <div class="my_div">
 
-    <div class="container">
-      <div class="row">
-        <div class="col-md-9">
-
-			<h4 class="mb-3" style="padding-top: 50px">VPN</h4>
-
-			 <div class="row">
-              <div class="col-md-4 mb-3">
-                <label for="vpn_continent">Continent</label>
-                <select class="custom-select d-block w-100" id="vpn_continent" required>
-                  <option value="">Choose...</option>
-					<option>All</option>
-					<option>Asia</option>
-					<option>Europe</option>
-					<option>North America</option>
-                </select>
-              </div>
-              <div class="col-md-4 mb-3">
-                <label for="vpn_country">Country</label>
-                <select class="custom-select d-block w-100" id="vpn_country" required>
-                  <option value="">Choose...</option>
-				  <option>All</option>
-				  <option>Canada</option>
-				  <option>China</option>
-                  <option>France</option>
-				  <option>Poland</option>
-                </select>
-              </div>
+            {# header#}
+            <div class="py-5 text-center">
+                <h2>Subscribe</h2>
+                <p class="lead">We are honored that you decided to use our service. As a proverb goes, forewarned is forearmed, we believe that our
+                    system will help your customers stay safe.</p>
             </div>
+            <div class="container">
+                 {# title #}
+                <h3 class="mb-3" style="padding-top: 50px">VPN</h3>
+                <p class="lead" style="font-size: 18px">Choose from which localizations do you want to have DNS servers checked.</p>
+
+                <h4 class="mb-3" style="padding-top: 50px">Available VPN localizations</h4>
+
+                 {# checkboxes #}
+                <div class="checkboxes">
+                    <label style="white-space: pre;  font-family: monospace; font-size: 14px; font-weight: bold;">{{ form.title }}</label>
+                    <div class="row">
+                        <div class="row">
+                            {% for checkbox in  form.multiple_checkboxes %}
+                                <div class="col-md-9">
+                                    <label>
+                                        {{ checkbox.tag }}
+                                        <label style="white-space: pre; font-family: monospace; font-size: 14px;">{{ checkbox.choice_label }} </label>
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                {# user's VPN #}
+                <h4 class="mb-3" style="padding-top: 50px">Your VPN (optional)</h4>
+                <div class="row">
+                    <div class="col-md-4 mb-3" style="margin-top:15px">
+                        {{form.vpn_file}}
+                    </div>
+                    <div class="col-md-1 mb-3">
+                        <button class="btn btn-secondary  btn-block" name="add" type="submit" style="margin-top:15px">add</button>
+                    </div>
+                </div>
+            </div>
+            {# button #}
+            <hr class="mb-4">
+            <button class="btn btn-primary btn-lg btn-block" name="continue" type="submit">Continue</button>
         </div>
-      </div>
-    </div>
-        <hr class="mb-4">
-        <button class="btn btn-primary btn-lg btn-block" type="submit">Continue</button>
-    </div>
     </form>
 {% endblock %}
