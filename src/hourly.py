@@ -162,7 +162,9 @@ def do_hourly_work(hour):
     if not subnets:
         log("couldn't get ANY /30 subnet of private"
             " addresses from the 0tdns config file - exiting");
-        return # TODO close cursor and connection here
+        cursor.close()
+        connection.close()
+        return
 
     if len(subnets) < parallel_vpns:
         log('configuration allows running {0} parallel vpn connections, but'
