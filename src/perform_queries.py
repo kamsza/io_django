@@ -7,7 +7,7 @@ import unbound
 import psycopg2
 
 # our own module used by several scripts in the project
-from ztdns_db_connectivity import start_db_connection, get_ztdns_config
+from ztdnslib import start_db_connection, get_ztdns_config
 
 class dns_queries:
     def __init__(self, dns_IP, dns_id, services):

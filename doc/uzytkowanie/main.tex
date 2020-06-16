@@ -28,7 +28,7 @@ oraz do \dir{/usr/sbin/} skrypty wchodzące w skład systemu.
 
 
 Oprócz tego \file{install.sh} umieszcza importowany przez inne skrypty
-\file{ztdns_db_connectivity.py} w \dir{/usr/lib/python3/dist-packages/}
+\file{ztdnslib.py} w \dir{/usr/lib/python3/dist-packages/}
 oraz kopiuje \file{db_connection_config.yml} do katalogu \dir{/etc/0tdns/}.
 
 Programy działające w ramach systemu automatycznie sukają konfiguracji
@@ -79,7 +79,7 @@ Jeśli z systemu mają być usunięte także pliki zainstalowane przez skrypt
 
 \section{Działanie części back-endowej systemu}
 Demon crona co gdzin uruchamia skrypt \file{hourly.py}, który łączy się
-z bazą (używając funkcji z \file{ztdns_db_connectivity.py}, która czyta
+z bazą (używając funkcji z \file{ztdnslib.py}, która czyta
 konfigurację \filepath{/etc/0tdns/db_connection_config.yml}).
 
 Skrypt \file{hourly.py} pobiera z bazy id wszystkich połączeń VPN,

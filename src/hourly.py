@@ -6,7 +6,7 @@ from os import path, waitpid, unlink
 from time import gmtime, strftime, sleep
 
 # our own module used by several scripts in the project
-from ztdns_db_connectivity import start_db_connection, \
+from ztdnslib import start_db_connection, \
     get_default_host_address, get_ztdns_config
 
 wrapper = '/var/lib/0tdns/vpn_wrapper.sh'

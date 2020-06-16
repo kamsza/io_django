@@ -24,6 +24,6 @@ install -D -m644 db_connection_config.yml "$INSTALL_ROOT"/etc/0tdns/db_connectio
 install -D -m744 src/hourly.py "$INSTALL_ROOT"/usr/sbin/hourly.py
 
 # This one shall be imported from other scripts
-install -D -m644 src/ztdns_db_connectivity.py "$INSTALL_ROOT"/usr/lib/python3/dist-packages/ztdns_db_connectivity.py
+install -D -m644 src/ztdnslib.py "$INSTALL_ROOT"/usr/lib/python3/dist-packages/ztdnslib.py
 
 # simillar approach will be used to install other files

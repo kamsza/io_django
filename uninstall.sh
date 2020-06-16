@@ -24,5 +24,5 @@ if [ "x$1" = "x--delete-files" ]; then
     rm -r /etc/netns/0tdns*
     rm /usr/sbin/hourly.py
     rm -r /etc/0tdns
-    rm /usr/lib/python3/dist-packages/ztdns_db_connectivity.py
+    rm /usr/lib/python3/dist-packages/ztdnslib.py
 fi
