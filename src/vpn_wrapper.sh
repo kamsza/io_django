@@ -5,28 +5,25 @@
 OVPN_COMMAND="/usr/sbin/openvpn"
 
 OPENVPN_CONFIG="$1"
-PHYSICAL_IP="$2"
-ROUTE_THROUGH_VETH="$3"
-# rest of args is the command to run in network namespace
-shift
-shift
-shift
-
 # for routing some traffic from within the namespace to physical
 # network (e.g. database connection) we need to create a veth pair;
+# ip datagrams routed through veth pair are going to have veth's private address
+# as their source address - we need to change it to the address of our physical
+# network device using iptables' SNAT. This address is provided by the caller.
+PHYSICAL_IP="$2"
 # as we want multiple instances of vpn_wrapper.sh to be able to
-# run simultaneously, we need unique ip addresses for them;
-# the solution is to derive an ip address from current shell's
-# PID (which is unique within a system)
-NUMBER=$((($$ - 1) * 4))
-WORD0HOST0=$(($NUMBER % 256 + 1))
-WORD0HOST1=$(($NUMBER % 256 + 2))
-NUMBER=$(($NUMBER / 256))
-WORD1=$(($NUMBER % 256))
-NUMBER=$(($NUMBER / 256))
-WORD2=$(($NUMBER % 256))
-VETH_HOST0=10.$WORD2.$WORD1.$WORD0HOST0
-VETH_HOST1=10.$WORD2.$WORD1.$WORD0HOST1
+# run simultaneously, we need unique ip addresses for veth devices, which
+# caller provides to us in command line arguments
+VETH_HOST0="$3"
+VETH_HOST1="$4"
+# caller specifies space-delimited subnets, traffic to which should not be
+# routed through the vpn (<database_ip>/32 is going to be here)
+ROUTE_THROUGH_VETH="$5"
+
+# rest of args is the command to run in network namespace
+for _ in `seq 5`; do
+    shift
+done
 
 # to enable multiple instances of this script to run simultaneously,
 # we tag namespace name with this shell's PID
