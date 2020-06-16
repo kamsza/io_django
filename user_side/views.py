@@ -3,7 +3,7 @@ from datetime import datetime
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from .models import Subscription, Responses, Response
-from .forms import SubscriptionForm, SubscriptionForm2, SubscriptionForm3, SubscriptionForm5
+from .forms import SubscriptionForm, SubscriptionForm2, SubscriptionForm3, SubscriptionForm5, SubscriptionForm4
 
 user_dns_list = [
     {
@@ -146,9 +146,18 @@ def buy_subscription_form_4_view(request, *args, **kwargs):
         return render(request, 'user_page/403.html')
 
     if request.method == 'POST':
-        return redirect('buy subscription form 5')
+        form = SubscriptionForm4(request.POST)
+        if 'add' in request.POST:
+            email = request.POST.get('user_email')
+            user = User.objects.filter(email=email)
+            if user:
+                form.add_user(email, user)
+            print(form.users_dict)
+        else:
+            return redirect('buy subscription form 5')
 
-    return render(request, "user_page/buy_subscription_form_4.html", {})
+    form = SubscriptionForm4()
+    return render(request, "user_page/buy_subscription_form_4.html", {'form': form})
 
 
 def buy_subscription_form_5_view(request, *args, **kwargs):

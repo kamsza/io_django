@@ -65,12 +65,21 @@ class SubscriptionForm3(forms.Form):
     vpn_file = forms.FileField(required=False)
 
 
+class SubscriptionForm4(forms.Form):
+    user_email = forms.EmailField(required=False,
+                                  widget=forms.TextInput(
+                                      attrs={'class': 'form-control', 'placeholder': 'User email', 'id': 'user_email', 'name': 'user_email'}))
+    users_dict = {}
+
+    def add_user(self, email, user):
+        self.users_dict[email] = user
+
+
 class SubscriptionForm5(forms.Form):
     payment_nr = []
 
     def add_payment_id(self, _id):
         self.payment_nr.append(_id)
-
 
 
 def get_location_dns(continent, country):
@@ -112,5 +121,3 @@ def get_dnses(continent, country):
         label = '{:45.43} {:15.15} {:15.12} {:15.12}'.format(dns.label, dns.IP, dns.location.continent, dns.location.country)
         dns_checklist.append((dns, label))
     return dns_checklist
-
-

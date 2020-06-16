@@ -45,6 +45,27 @@
                  {# title #}
                 <h3 class="mb-3" style="padding-top: 50px">Users</h3>
                 <p class="lead" style="font-size: 18px">If you want to add some more users, that will have access to data about your service, you can do it here.</p>
+
+                {% if form.users_dict %}
+                    <h4 class="mb-3" style="padding-top: 20px">Added users</h4>
+                    <ul>
+                        {% for email, _ in form.users_dict.items %}
+                            <li style="font-family: monospace; font-size: 14px;">{{ email }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                <div class="row" style="margin-top: 50px">
+                    <div class="col-md-2 mb-3">
+                        <label>User name:</label>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        {{ form.user_email }}
+                    </div>
+                    <div class="col-md-1 mb-3">
+                        <button class="btn btn-secondary  btn-block" name="add" type="submit">add</button>
+                    </div>
+                </div>
             {# button #}
             <hr class="mb-4">
             <button class="btn btn-primary btn-lg btn-block" name="continue" type="submit">Continue</button>
