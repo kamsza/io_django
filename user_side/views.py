@@ -2,8 +2,8 @@ from datetime import datetime
 
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
-from .models import Subscription, Responses, Response
-from .forms import SubscriptionForm, SubscriptionForm2, SubscriptionForm3, SubscriptionForm5, SubscriptionForm4
+from .models import Subscription, Responses, Response, Service
+from .forms import SubscriptionForm1, SubscriptionForm2, SubscriptionForm3, SubscriptionForm5, SubscriptionForm4
 
 user_dns_list = [
     {
@@ -87,24 +87,24 @@ def buy_subscription_form_1_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
         return render(request, 'user_page/403.html')
 
-    form = SubscriptionForm()
-
     if request.method == 'POST':
-        form = SubscriptionForm(request.POST)
+        form = SubscriptionForm1(request.POST)
         if form.is_valid():
-            print(form.data['label'])
-            print(form.data['web_address'])
-            print(form.data['ip'])
+            request.session['label'] = form.data['label']
+            request.session['web_address'] = form.data['web_address']
+            request.session['ip'] = form.data['ip']
             return redirect('buy subscription form 2')
 
+    form = SubscriptionForm1()
     return render(request, "user_page/buy_subscription_form_1.html", {'form': form})
 
 
 def buy_subscription_form_2_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
         return render(request, 'user_page/403.html')
-    print(request.POST)
+
     if request.method == 'POST':
+        print('2 ', request.POST)
         if 'filter' in request.POST:
             continent = request.POST.get('continent_choice')
             country = request.POST.get('country_choice')
@@ -118,10 +118,9 @@ def buy_subscription_form_2_view(request, *args, **kwargs):
             return render(request, "user_page/buy_subscription_form_2.html", {'form': form})
         else:
             form = SubscriptionForm2(request.POST)
-            print(form.fields['multiple_checkboxes'])
             if form.is_valid():
-                print(form.cleaned_data['multiple_checkboxes'])
-                print(form.user_dns_list)
+                request.session['dnses'] = form.cleaned_data['multiple_checkboxes']
+                request.session['user_dnses'] = form.user_dns_list
                 return redirect('buy subscription form 3')
             else:
                 print(form.errors)
@@ -135,7 +134,12 @@ def buy_subscription_form_3_view(request, *args, **kwargs):
         return render(request, 'user_page/403.html')
 
     if request.method == 'POST':
-        return redirect('buy subscription form 4')
+        form = SubscriptionForm3(request.POST)
+        if form.is_valid():
+            request.session['vpns'] = form.cleaned_data['multiple_checkboxes']
+            return redirect('buy subscription form 4')
+        else:
+            print(form.errors)
 
     form = SubscriptionForm3()
     return render(request, "user_page/buy_subscription_form_3.html", {'form': form})
@@ -146,14 +150,16 @@ def buy_subscription_form_4_view(request, *args, **kwargs):
         return render(request, 'user_page/403.html')
 
     if request.method == 'POST':
+        print('4 ', request.POST)
         form = SubscriptionForm4(request.POST)
         if 'add' in request.POST:
             email = request.POST.get('user_email')
             user = User.objects.filter(email=email)
             if user:
-                form.add_user(email, user)
-            print(form.users_dict)
+                if email != '':
+                    form.add_user(email, user.first().id)
         else:
+            request.session['users'] = list(form.users_dict.values())
             return redirect('buy subscription form 5')
 
     form = SubscriptionForm4()
@@ -165,16 +171,25 @@ def buy_subscription_form_5_view(request, *args, **kwargs):
         return render(request, 'user_page/403.html')
 
     if request.method == 'POST':
+        print('5 ', request.POST)
         form = SubscriptionForm5(request.POST)
         if 'pay' in request.POST:
-            form.add_payment_id("112223344")
+            form.payment_nr.append('111222333444')
+            request.session['payment_id'] = '111222333444'
             return render(request, "user_page/buy_subscription_form_5.html", {'form': form, 'action': 'payed'})
         else:
             if form.payment_nr:
+                print('data daTA DATA')
+                print(request.session['label'])
+                print(request.session['web_address'])
+                print(request.session['ip'])
+                print(request.session['dnses'])
+                print(request.session['user_dnses'])
+                print(request.session['vpns'])
+                print(request.session['users'])
                 return redirect('buy subscription')
             else:
                 return render(request, "user_page/buy_subscription_form_5.html", {'form': form, 'action': 'not_payed'})
 
     form = SubscriptionForm5()
     return render(request, "user_page/buy_subscription_form_5.html", {'form': form})
-

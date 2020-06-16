@@ -3,7 +3,39 @@ from .models import DNS, VPN, Location
 import concurrent.futures
 
 
-class SubscriptionForm(forms.Form):
+# class SubscriptionForm(forms.Form):
+#     service = None
+#     order = None
+#     subscriptions = []
+#     queries = []
+#     dnses = []
+#     vpns = []
+#
+#     def add_service(self, service):
+#         self.service = service
+#
+#     def add_order(self, order):
+#         self.order = order
+#
+#     def add_subscriptions(self, subscriptions):
+#         self.subscriptions = self.subscriptions + subscriptions
+#
+#     def add_queries(self, queries):
+#         self.queries = self.queries + queries
+#
+#     def add_dnses(self, dnses):
+#         self.dnses = self.dnses + dnses
+#
+#     def add_vpns(self, vpns):
+#         self.vpns = self.dnses + vpns
+#
+#     def save(self):
+#         self.service.save()
+#         self.order.save()
+#         for x in self.subscriptions + self.queries + self.dnses + self.vpns:
+#             x.save()
+
+class SubscriptionForm1(forms.Form):
     label = forms.CharField(max_length=40,
                             required=False,
                             widget=forms.TextInput(
@@ -119,5 +151,5 @@ def get_dnses(continent, country):
     dns_checklist = []
     for dns in dns_list:
         label = '{:45.43} {:15.15} {:15.12} {:15.12}'.format(dns.label, dns.IP, dns.location.continent, dns.location.country)
-        dns_checklist.append((dns, label))
+        dns_checklist.append((dns.id, label))
     return dns_checklist
