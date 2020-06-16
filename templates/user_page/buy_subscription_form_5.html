@@ -52,9 +52,9 @@
 
                 {% if action %}
                     {% if action == 'payed' %}
-                        PAYED
+                        <p style="color:green;font-weight: bold;font-size: 14px;text-align: center"> Payment successful </p>
                     {% elif action == 'not_payed' %}
-                        NOT PAYED
+                        <p style="color:red;font-weight: bold;font-size: 14px;text-align: center"> Oops! You need to pay first. </p>
                     {% endif %}
                 {% endif %}
 

@@ -48,9 +48,9 @@
 
                 {% if form.users_dict %}
                     <h4 class="mb-3" style="padding-top: 20px">Added users</h4>
-                    <ul>
+                    <ul  class="list-group list-group-flush">
                         {% for email, _ in form.users_dict.items %}
-                            <li style="font-family: monospace; font-size: 14px;">{{ email }}</li>
+                            <li class="list-group-item" style="font-size: 14px;">{{ email }}</li>
                         {% endfor %}
                     </ul>
                 {% endif %}
