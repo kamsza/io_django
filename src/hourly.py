@@ -213,8 +213,9 @@ def do_hourly_work(hour, logfile):
         command_in_namespace = [perform_queries, hour, str(vpn_id)]
         logfile.write("Running connection for vpn {}\n".format(vpn_id))
 
+        # see into vpn_wrapper.sh for explaination of its arguments
         p = subprocess.Popen([wrapper, config_path, physical_ip, veth_addr1,
-                              veth_addr2, route_through_veth] +
+                              veth_addr2, route_through_veth, str(vpn_id)] +
                              command_in_namespace)
 
         pids_wrappers[p.pid] = (vpn_id, subnet, p)

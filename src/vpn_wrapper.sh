@@ -19,15 +19,17 @@ VETH_HOST1="$4"
 # caller specifies space-delimited subnets, traffic to which should not be
 # routed through the vpn (<database_ip>/32 is going to be here)
 ROUTE_THROUGH_VETH="$5"
+# we use a unique id provided in 6th argument to tag namespace name
+ID="$6"
 
 # rest of args is the command to run in network namespace
-for _ in `seq 5`; do
+for _ in `seq 6`; do
     shift
 done
 
 # to enable multiple instances of this script to run simultaneously,
-# we tag namespace name with this shell's PID
-NAMESPACE_NAME=0tdns$$
+# we tag namespace name
+NAMESPACE_NAME=0tdns$ID
 NETNS_SCRIPT=/var/lib/0tdns/netns-script
 
 # in case we want some process in the namespace to be able
