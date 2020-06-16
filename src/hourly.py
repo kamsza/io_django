@@ -10,7 +10,7 @@ import psycopg2
 
 # our own module used by several scripts in the project
 from ztdnslib import start_db_connection, \
-    get_default_host_address, get_ztdns_config
+    get_default_host_address, get_ztdns_config, log
 
 wrapper = '/var/lib/0tdns/vpn_wrapper.sh'
 perform_queries = '/var/lib/0tdns/perform_queries.py'
@@ -97,7 +97,7 @@ def number_to_ip_address(number):
 # Addressess ending with .16 (subnet address)
 # and .19 (broadcast in the subnet) are considered unusable in this case.
 # The returned set will contain up to count elements.
-def get_available_subnetworks(count, address_ranges, logfile):
+def get_available_subnetworks(count, address_ranges):
     available_subnetworks = set()
 
     for address_range in address_ranges:
@@ -122,8 +122,8 @@ def get_available_subnetworks(count, address_ranges, logfile):
                 end_addr_number -= 1
 
             if start_addr_number >= end_addr_number:
-                logfile.write("address range '{}' doesn't contain any"
-                              " /30 subnetworks\n".format(address_range))
+                log("address range '{}' doesn't contain any /30 subnetworks"\
+                    .format(address_range))
             else:
                 while len(available_subnetworks) < count and \
                       start_addr_number < end_addr_number:
@@ -132,15 +132,14 @@ def get_available_subnetworks(count, address_ranges, logfile):
                     available_subnetworks.add((usable_addr1, usable_addr2))
                     start_addr_number += 4
         else:
-            logfile.write("'{}' is not a valid address range\n"\
-                          .format(address_range))
+            log("'{}' is not a valid address range".format(address_range))
 
     return available_subnetworks
 
-def do_hourly_work(hour, logfile):
+def do_hourly_work(hour):
     ztdns_config = get_ztdns_config()
     if ztdns_config['enabled'] != 'yes':
-        logfile.write("0tdns not enabled in the config - exiting\n")
+        log('0tdns not enabled in the config - exiting')
         return
 
     connection = start_db_connection(ztdns_config)
@@ -150,7 +149,7 @@ def do_hourly_work(hour, logfile):
 
     handled_vpns = ztdns_config.get('handled_vpns')
     if handled_vpns:
-        logfile.write("Only handling vpns of ids {}\n".format(handled_vpns))
+        log('Only handling vpns of ids {}'.format(handled_vpns))
         vpns = [vpn for vpn in vpns if vpn[0] in handled_vpns]
     else:
         # if not specfied in the config, all vpns are handled
@@ -158,26 +157,25 @@ def do_hourly_work(hour, logfile):
 
     parallel_vpns = ztdns_config['parallel_vpns'] # we need this many subnets
     subnets = get_available_subnetworks(parallel_vpns,
-                                        ztdns_config['private_addresses'],
-                                        logfile)
+                                        ztdns_config['private_addresses'])
 
     if not subnets:
-        logfile.write("couldn't get ANY /30 subnet of private addresses from"
-                      " the 0tdns config file - exiting\n");
+        log("couldn't get ANY /30 subnet of private"
+            " addresses from the 0tdns config file - exiting");
         return # TODO close cursor and connection here
 
     if len(subnets) < parallel_vpns:
-        logfile.write("configuration allows running {0} parallel vpn"
-                      " connections, but provided private ip addresses give"
-                      " only {1} /30 subnets, which limits parallel connections"
-                      " to {1}\n".format(parallel_vpns, len(subnets)))
+        log('configuration allows running {0} parallel vpn connections, but'
+            ' provided private ip addresses give only {1} /30 subnets, which'
+            ' limits parallel connections to {1}'\
+            .format(parallel_vpns, len(subnets)))
         parallel_vpns = len(subnets)
     
     for vpn_id, config_hash in vpns:
         config_path = "/var/lib/0tdns/{}.ovpn".format(config_hash)
         if not path.isfile(config_path):
-            logfile.write("Syncing config for vpn {} with hash {}\n"\
-                          .format(vpn_id, config_hash))
+            log('Syncing config for vpn {} with hash {}'\
+                .format(vpn_id, config_hash))
             sync_ovpn_config(cursor, vpn_id, config_path, config_hash)
 
     # map of each wrapper pid to tuple containing id of the vpn it connects to
@@ -195,13 +193,11 @@ def do_hourly_work(hour, logfile):
         if exit_status != 0:
             if exit_status == 2:
                 # this means our perform_queries.py crashed... not good
-                logfile.write('performing queries through vpn {} failed\n'\
-                              .format(vpn_id))
+                log('performing queries through vpn {} failed'.format(vpn_id))
                 result_info = 'internal failure: process_crash'
             else:
                 # vpn server is probably not responding
-                logfile.write('connection to vpn {} failed\n'\
-                              .format(vpn_id))
+                log('connection to vpn {} failed'.format(vpn_id))
                 result_info = 'internal failure: vpn_connection_failure'
 
             try:
@@ -214,8 +210,7 @@ def do_hourly_work(hour, logfile):
                 WHERE vpn_id = %s);
                 ''', (hour, result_info, vpn_id))
             except psycopg2.IntegrityError:
-                logfile.write('results already exist for vpn {}\n'\
-                              .format(vpn_id))
+                log('results already exist for vpn {}'.format(vpn_id))
 
         pids_wrappers.pop(pid)
         subnets.add(subnet)
@@ -230,7 +225,7 @@ def do_hourly_work(hour, logfile):
         veth_addr1, veth_addr2 = subnet
         route_through_veth = ztdns_config['host'] + "/32"
         command_in_namespace = [perform_queries, hour, str(vpn_id)]
-        logfile.write("Running connection for vpn {}\n".format(vpn_id))
+        log('Running connection for vpn {}'.format(vpn_id))
 
         # see into vpn_wrapper.sh for explaination of its arguments
         p = subprocess.Popen([wrapper, config_path, physical_ip, veth_addr1,
@@ -250,19 +245,16 @@ def do_hourly_work(hour, logfile):
     connection.close()
 
 
-with open("/var/log/0tdns.log", "a") as logfile:
-    # round down to an hour - this datetime format is one
-    # of the formats accepted by postgres
-    hour = strftime('%Y-%m-%d %H:00%z', gmtime())
-    if not lock_on_file():
-        logfile.write("Failed trying to run for {}; {} exists\n"\
-                      .format(hour, lockfile))
-    else:
-        try:
-            logfile.write("Running for {}\n".format(hour))
-            do_hourly_work(hour, logfile)
-        finally:
-            if not unlock_on_file():
-                logfile.write("Can't remove lock - {} already deleted!\n"\
-                              .format(lockfile))
+# round down to an hour - this datetime format is one
+# of the formats accepted by postgres
+hour = strftime('%Y-%m-%d %H:00%z', gmtime())
+if not lock_on_file():
+    log('Failed trying to run for {}; {} exists'.format(hour, lockfile))
+else:
+    try:
+        log('Running for {}'.format(hour))
+        do_hourly_work(hour)
+    finally:
+        if not unlock_on_file():
+            log("Can't remove lock - {} already deleted!".format(lockfile))
                         

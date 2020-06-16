@@ -1,7 +1,10 @@
 import yaml
 import psycopg2
+import os
+import fcntl
 
 db_config_path = '/etc/0tdns/db_connection_config.yml'
+logfile = '/var/log/0tdns.log'
 
 def get_ztdns_config():
     return yaml.safe_load(open(db_config_path, 'r'))
@@ -24,3 +27,13 @@ def get_default_host_address(remote_address):
     hostaddr = s.getsockname()[0]
     s.close()
     return hostaddr
+
+def log(msg):
+    msg = bytearray(msg + '\n', "UTF-8")
+    fd = os.open(logfile, os.O_APPEND | os.O_WRONLY | os.O_CREAT)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        os.write(fd, msg)
+        fcntl.flock(fd, fcntl.LOCK_UN)
+    finally:
+        os.close(fd)
