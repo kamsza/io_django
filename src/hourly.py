@@ -218,6 +218,10 @@ def do_hourly_work(hour, logfile):
                               veth_addr2, route_through_veth, str(vpn_id)] +
                              command_in_namespace)
 
+        # we're not actually using the subprocess object anywhere, but we
+        # put it in the dict regardless to keep a reference to it - otherwise
+        # python would reap the child for us and waitpid(0, 0) would raise
+        # '[Errno 10] No child processes' :c
         pids_wrappers[p.pid] = (vpn_id, subnet, p)
 
     while len(pids_wrappers) > 0:
