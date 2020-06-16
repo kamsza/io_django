@@ -1,0 +1,54 @@
+{% extends "user_page/base.html" %}
+{% load static %}
+
+{% block header %}
+    <style>
+
+        .my_div {
+            margin-bottom: 5%;
+        }
+
+        .checkboxes {
+            margin-top: 20px;
+            margin-left:20px;
+        }
+
+        button {
+            margin-left: 50%;
+            max-width: 300px;
+            transform: translate(-50%, 0%);
+        }
+
+    </style>
+{% endblock %}
+
+
+{% block sidebar %}
+    <li class="nav-item"><a class="nav-link" href="{% url 'user page' %}">Home</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'user profile' %}">Profile</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'user statistics' %}">Statistics</a></li>
+    <li class="nav-item"><a class="nav-link active" href="{% url 'buy subscription' %}">Buy subscription</a></li>
+{% endblock %}
+
+{% block content %}
+    <form method="POST" action="">
+        {% csrf_token %}
+        <div class="my_div">
+
+            {# header#}
+            <div class="py-5 text-center">
+                <h2>Subscribe</h2>
+                <p class="lead">We are honored that you decided to use our service. As a proverb goes, forewarned is forearmed, we believe that our
+                    system will help your customers stay safe.</p>
+            </div>
+            <div class="container">
+                 {# title #}
+                <h3 class="mb-3" style="padding-top: 50px">Users</h3>
+                <p class="lead" style="font-size: 18px">If you want to add some more users, that will have access to data about your service, you can do it here.</p>
+            {# button #}
+            <hr class="mb-4">
+            <button class="btn btn-primary btn-lg btn-block" name="continue" type="submit">Continue</button>
+            </div>
+        </div>
+    </form>
+{% endblock %}

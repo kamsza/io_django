@@ -3,7 +3,7 @@ from datetime import datetime
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from .models import Subscription, Responses, Response
-from .forms import SubscriptionForm, SubscriptionForm2, SubscriptionForm3
+from .forms import SubscriptionForm, SubscriptionForm2, SubscriptionForm3, SubscriptionForm5
 
 user_dns_list = [
     {
@@ -135,7 +135,37 @@ def buy_subscription_form_3_view(request, *args, **kwargs):
         return render(request, 'user_page/403.html')
 
     if request.method == 'POST':
-        return redirect('buy subscription')
+        return redirect('buy subscription form 4')
 
     form = SubscriptionForm3()
     return render(request, "user_page/buy_subscription_form_3.html", {'form': form})
+
+
+def buy_subscription_form_4_view(request, *args, **kwargs):
+    if not request.user.is_authenticated:
+        return render(request, 'user_page/403.html')
+
+    if request.method == 'POST':
+        return redirect('buy subscription form 5')
+
+    return render(request, "user_page/buy_subscription_form_4.html", {})
+
+
+def buy_subscription_form_5_view(request, *args, **kwargs):
+    if not request.user.is_authenticated:
+        return render(request, 'user_page/403.html')
+
+    if request.method == 'POST':
+        form = SubscriptionForm5(request.POST)
+        if 'pay' in request.POST:
+            form.add_payment_id("112223344")
+            return render(request, "user_page/buy_subscription_form_5.html", {'form': form, 'action': 'payed'})
+        else:
+            if form.payment_nr:
+                return redirect('buy subscription')
+            else:
+                return render(request, "user_page/buy_subscription_form_5.html", {'form': form, 'action': 'not_payed'})
+
+    form = SubscriptionForm5()
+    return render(request, "user_page/buy_subscription_form_5.html", {'form': form})
+

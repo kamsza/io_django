@@ -36,6 +36,8 @@ urlpatterns = [
     path('user_page/buy_form/1/', user_side.buy_subscription_form_1_view, name='buy subscription form 1'),
     path('user_page/buy_form/2/', user_side.buy_subscription_form_2_view, name='buy subscription form 2'),
     path('user_page/buy_form/3/', user_side.buy_subscription_form_3_view, name='buy subscription form 3'),
+    path('user_page/buy_form/4/', user_side.buy_subscription_form_4_view, name='buy subscription form 4'),
+    path('user_page/buy_form/5/', user_side.buy_subscription_form_5_view, name='buy subscription form 5'),
 
     path('403/', user_side.error_view, name='error'),
 

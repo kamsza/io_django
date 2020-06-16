@@ -62,7 +62,15 @@ class SubscriptionForm3(forms.Form):
         label = '{:30.25} {:30.25}'.format(vpn.location.continent, vpn.location.country)
         vpn_checklist.append((vpn.id, label))
     multiple_checkboxes = forms.MultipleChoiceField(choices=vpn_checklist, widget=forms.CheckboxSelectMultiple())
-    vpn_file = forms.FileField()
+    vpn_file = forms.FileField(required=False)
+
+
+class SubscriptionForm5(forms.Form):
+    payment_nr = []
+
+    def add_payment_id(self, _id):
+        self.payment_nr.append(_id)
+
 
 
 def get_location_dns(continent, country):
