@@ -22,8 +22,6 @@ def sync_ovpn_config(cursor, vpn_id, config_path, config_hash):
 
     (config_contents,) = cursor.fetchone()
 
-    print(config_contents.tobytes())
-
     with open(config_path, "wb") as config_file:
         config_file.write(config_contents.tobytes())
 
