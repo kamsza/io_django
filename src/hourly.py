@@ -152,7 +152,7 @@ def do_hourly_work(hour, logfile):
         vpns = [vpn for vpn in vpns if vpn[0] in handled_vpns]
     else:
         # if not specfied in the config, all vpns are handled
-        hadled_vpns = [vpn[0] for vpn in vpns]
+        handled_vpns = [vpn[0] for vpn in vpns]
 
     parallel_vpns = ztdns_config['parallel_vpns'] # we need this many subnets
     subnets = get_available_subnetworks(parallel_vpns,
