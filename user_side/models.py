@@ -12,12 +12,12 @@ class DNS(models.Model):
     label = models.CharField(max_length=100)
     location = models.ForeignKey('Location', on_delete=models.DO_NOTHING)
     IP = models.GenericIPAddressField()
+    public = models.BooleanField(default=True)
 
 class Location(models.Model):
     continent = models.CharField(max_length=20)
     country = models.CharField(max_length=20)
     address = models.CharField(max_length=50, null=True)
-
 
 class Queries(models.Model):
     service = models.ForeignKey('Service', on_delete=models.CASCADE)

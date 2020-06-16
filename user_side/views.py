@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
-from .models import Subscription, Responses, Response, Service
+from .models import Subscription, Responses, Response, Service, Order, DNS, Queries
 from .forms import SubscriptionForm1, SubscriptionForm2, SubscriptionForm3, SubscriptionForm5, SubscriptionForm4
 
 user_dns_list = [
@@ -179,17 +179,52 @@ def buy_subscription_form_5_view(request, *args, **kwargs):
             return render(request, "user_page/buy_subscription_form_5.html", {'form': form, 'action': 'payed'})
         else:
             if form.payment_nr:
-                print('data daTA DATA')
-                print(request.session['label'])
-                print(request.session['web_address'])
-                print(request.session['ip'])
-                print(request.session['dnses'])
-                print(request.session['user_dnses'])
-                print(request.session['vpns'])
-                print(request.session['users'])
+                label = request.session['label']
+                web_address = request.session['web_address']
+                ip = request.session['ip']
+                dnses = request.session['dnses']
+                user_dnses = request.session['user_dnses']
+                vpns = request.session['vpns']
+                users = request.session['users']
+                payment_id = request.session['payment_id']
+                service = create_service(label, web_address, ip)
+                sub = create_subscriptions(request.user, users, service)
+                create_order(sub, payment_id)
+                usr_dnses = create_dns(user_dnses)
+                create_queries(service, dnses, vpns)
                 return redirect('buy subscription')
             else:
                 return render(request, "user_page/buy_subscription_form_5.html", {'form': form, 'action': 'not_payed'})
 
     form = SubscriptionForm5()
     return render(request, "user_page/buy_subscription_form_5.html", {'form': form})
+
+def create_service(label, web_address, ip):
+    service = Service(label=label, name=web_address, IP=ip)
+    service.save()
+    return service
+
+def create_order(subscription, payment_id):
+    order = Order(subscription=subscription, date=datetime.now(), value=0, payment_id=payment_id)
+    order.save()
+
+def create_subscriptions(curr_user, users_ids, service):
+    sub = Subscription(user=curr_user, service=service, start_date=datetime.now(), end_date=datetime.fromtimestamp(1608137809))
+    sub.save()
+    for user_id in users_ids:
+        x_sub = Subscription(user_id=user_id, service=service, start_date=datetime.now(), end_date=datetime.fromtimestamp(1608137809))
+        x_sub.save()
+    return sub
+
+def create_dns(user_dnses):
+    dnses = []
+    for ip in user_dnses:
+        x_dns = DNS(IP=ip, public=False)
+        x_dns.save()
+        dnses.append(x_dns)
+    return dnses
+
+def create_queries(service, dnses, vpns):
+    for dns in dnses:
+        for vpn in vpns:
+            Queries(service-service, dns_id=dns, vpn_id=vpn, validity=1000).save()
