@@ -69,6 +69,9 @@ def do_hourly_work(hour, logfile):
     if handled_vpns:
         logfile.write("Only handling vpns of ids {}\n".format(handled_vpns))
         vpns = [vpn for vpn in vpns if vpn[0] in handled_vpns]
+    else:
+        # if not specfied in the config, all vpns are handled
+        hadled_vpns = [vpn[0] for vpn in vpns]
 
     for vpn_id, config_hash in vpns:
         config_path = "/var/lib/0tdns/{}.ovpn".format(config_hash)
@@ -124,8 +127,8 @@ def do_hourly_work(hour, logfile):
              q.dns_id = r.dns_id AND
              q.vpn_id = r.vpn_id AND
              date = %s
-     WHERE r.id IS NULL);
-    ''', (hour, hour))
+     WHERE r.id IS NULL AND q.vpn_id = ANY(%s));
+    ''', (hour, hour, handled_vpns))
 
     cursor.close()
     connection.close()
