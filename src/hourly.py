@@ -2,7 +2,7 @@
 
 from sys import argv
 import subprocess
-from os import path, waitpid
+from os import path, waitpid, unlink
 from time import gmtime, strftime, sleep
 
 # our own module used by several scripts in the project
@@ -11,6 +11,7 @@ from ztdns_db_connectivity import start_db_connection, \
 
 wrapper = '/var/lib/0tdns/vpn_wrapper.sh'
 perform_queries = '/var/lib/0tdns/perform_queries.py'
+lockfile = '/var/lib/0tdns/lockfile'
 
 def sync_ovpn_config(cursor, vpn_id, config_path, config_hash):
     cursor.execute('''
@@ -39,12 +40,23 @@ def get_vpn_connections(cursor, hour):
     ''')
     return cursor.fetchall()
 
-with open("/var/log/0tdns.log", "a") as logfile:
-    # round down to an hour - this datetime format is one
-    # of the formats accepted by postgres
-    hour = strftime('%Y-%m-%d %H:00%z', gmtime())
-    logfile.write("Running for {}\n".format(hour))
+# return True on success and False if lock exists
+def lock_on_file():
+    try:
+        with open(lockfile, 'x'):
+            return True
+    except FileExistsError:
+        return False
 
+# return True on success and False if lock got removed in the meantime
+def unlock_on_file():
+    try:
+        unlink(lockfile)
+        return True
+    except FileNotFoundError:
+        return False
+
+def do_hourly_work(hour, logfile):
     ztdns_config = get_ztdns_config()
     if ztdns_config['enabled'] != 'yes':
         logfile.write("0tdns not enabled in the config - exiting\n")
@@ -119,3 +131,21 @@ with open("/var/log/0tdns.log", "a") as logfile:
 
     cursor.close()
     connection.close()
+
+
+with open("/var/log/0tdns.log", "a") as logfile:
+    # round down to an hour - this datetime format is one
+    # of the formats accepted by postgres
+    hour = strftime('%Y-%m-%d %H:00%z', gmtime())
+    if not lock_on_file():
+        logfile.write("Failed trying to run for {}; {} exists\n"\
+                      .format(hour, lockfile))
+    else:
+        try:
+            logfile.write("Running for {}\n".format(hour))
+            do_hourly_work(hour, logfile)
+        finally:
+            if not unlock_on_file():
+                logfile.write("Can't remove lock - {} already deleted!\n"\
+                              .format(lockfile))
+                        
