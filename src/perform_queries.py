@@ -7,7 +7,7 @@ import unbound
 import psycopg2
 
 # our own module used by several scripts in the project
-from ztdnslib import start_db_connection, get_ztdns_config
+from ztdnslib import start_db_connection, get_ztdns_config, log
 
 class dns_queries:
     def __init__(self, dns_IP, dns_id, services):
@@ -58,6 +58,8 @@ def query_planned_queries(cursor, hour, vpn_id):
     return dnss_to_query
 
 def resolve_call_back(mydata, status, result):
+    global dups
+
     query = mydata
     # debugging
     print("callback called for {}".format(result.qname))
@@ -95,10 +97,11 @@ def resolve_call_back(mydata, status, result):
         # Unique constraint is stopping us from adding duplicates;
         # This is most likey because back-end has been run multiple times
         # during the same hour (bad configuration or admin running manually
-        # after cron)
-        pass
+        # after cron), we'll write to logs about that.
+        dups = True
     # no committing, since auto-commit mode is set on the connection
 
+dups = False
 hour = argv[1]
 vpn_id = argv[2]
 config = get_ztdns_config()
@@ -146,3 +149,6 @@ for thread in threads:
 
 cursor.close()
 connection.close()
+
+if dups:
+    log('results already exist for vpn {}'.format(vpn_id))
