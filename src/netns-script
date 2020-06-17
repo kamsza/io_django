@@ -12,6 +12,10 @@
 #    ROUTE_THROUGH_VETH
 #    PHYSICAL_IP
 
+# tag veth names so that they are uniqie between instances of this script
+VETH0=v0tdns${WRAPPER_PID}_0
+VETH1=v0tdns${WRAPPER_PID}_1
+
 case $script_type in
     up)
 	        ip netns add $NAMESPACE_NAME
@@ -36,8 +40,9 @@ case $script_type in
 		ip netns exec $NAMESPACE_NAME ip link set $VETH1 up
                 ;;
         route-up)
-	        # TODO change to only forward from necessary interfaces
-	        echo 1 > /proc/sys/net/ipv4/conf/all/forwarding
+	        # user is responsible for enabling routing from physical
+	        # interface to veth devices, we're enabling the reverse way
+                echo 1 > /proc/sys/net/ipv4/conf/$VETH0/forwarding
 		
 	        ip netns exec $NAMESPACE_NAME ip route add default via "$ifconfig_remote"
 	    
