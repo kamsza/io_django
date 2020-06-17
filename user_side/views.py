@@ -25,7 +25,7 @@ def home_page_view(request, *args, **kwargs):
     for registry in responses:
         returned_ip = Response.objects.filter(responses_id=registry.id).order_by('-id').first()
         user_services.append({'label': registry.service.label,
-                              'web_address': registry.service.name,
+                              'web_address': registry.service.web_address,
                               'ip': returned_ip,
                               'result': registry.result,
                               'last_checked': registry.date.strftime('%d-%m-%Y %H:%M:%S')
@@ -173,7 +173,7 @@ def buy_subscription_form_5_view(request, *args, **kwargs):
     return render(request, "user_page/buy_subscription_form_5.html", {'form': form})
 
 def create_service(label, web_address, ip):
-    service = Service(label=label, name=web_address, IP=ip)
+    service = Service(label=label, web_address=web_address, IP=ip)
     service.save()
     return service
 
