@@ -13,7 +13,8 @@ def get_ztdns_config():
 def start_db_connection(config):
     connection = psycopg2.connect(user=config['user'], password=config['password'],
                                   host=config['host'], port=config['port'],
-                                  database=config['database'])
+                                  database=config['database'],
+                                  connect_timeout=10)
     # we might later decide that each user of start_db_connection()
     # should set it themselves - but for now, set it here
     connection.autocommit = True
