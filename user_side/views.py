@@ -24,9 +24,10 @@ def home_page_view(request, *args, **kwargs):
     user_services = []
     for registry in responses:
         returned_ip = Response.objects.filter(responses_id=registry.id).order_by('-id').first()
-        user_services.append({'label': registry.service.name,
+        user_services.append({'label': registry.service.label,
+                              'web_address': registry.service.name,
                               'ip': returned_ip,
-                              'status': registry.result,
+                              'result': registry.result,
                               'last_checked': registry.date.strftime('%d-%m-%Y %H:%M:%S')
                               })
 
