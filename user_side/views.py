@@ -5,33 +5,6 @@ from django.contrib.auth.models import User
 from .models import Subscription, Responses, Response, Service, Order, DNS, Queries
 from .forms import SubscriptionForm1, SubscriptionForm2, SubscriptionForm3, SubscriptionForm5, SubscriptionForm4
 
-user_dns_list = [
-    {
-        'label': 'Service 1',
-        'name': 'www.service1.pl',
-        'status': 'OK',
-        'last_checked': datetime.fromtimestamp(1591038723).strftime('%d-%m-%Y %H:%M:%S')
-    },
-    {
-        'label': 'Service 1',
-        'name': 'www.service2.pl',
-        'status': 'WRONG IP',
-        'last_checked': '1.06.2020 r. 18:36'
-    },
-    {
-        'label': 'Service 3',
-        'name': 'www.service3.pl',
-        'status': 'OK',
-        'last_checked': '2.06.2020 r. 17:08'
-    },
-    {
-        'label': 'Service 4',
-        'name': 'www.service4.pl',
-        'status': 'OK',
-        'last_checked': '2.06.2020 r. 19:52'
-    }
-]
-
 
 # Create your views here.
 def home_page_view(request, *args, **kwargs):
@@ -54,11 +27,10 @@ def home_page_view(request, *args, **kwargs):
         user_services.append({'label': registry.service.name,
                               'ip': returned_ip,
                               'status': registry.result,
-                              'last_checked': registry.date
+                              'last_checked': registry.date.strftime('%d-%m-%Y %H:%M:%S')
                               })
 
-    return render(request, "user_page/home.html", {'user_services': user_dns_list})
-    # return render(request, "user_page/home.html", {'user_services': {}})
+    return render(request, "user_page/home.html", {'user_services': user_services})
 
 
 def profile_view(request, *args, **kwargs):

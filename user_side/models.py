@@ -32,6 +32,11 @@ class Responses(models.Model):
     date = models.DateTimeField(default=timezone.now)
     result = models.CharField(max_length=50)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['dns', 'date', 'vpn', 'service'], name='unique row constraint')
+        ]
+
 class Response(models.Model):
     responses = models.ForeignKey('Responses', on_delete=models.CASCADE)
     returned_ip = models.GenericIPAddressField()
