@@ -166,8 +166,5 @@ for dns_queries in planned_queries:
 for thread in threads:
     thread.join()
 
-cursor.close()
-connection.close()
-
 if dups:
     log('results already exist for vpn {}'.format(vpn_id))
