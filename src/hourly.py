@@ -10,7 +10,7 @@ import psycopg2
 
 # our own module used by several scripts in the project
 from ztdnslib import start_db_connection, \
-    get_default_host_address, get_ztdns_config, log
+    get_default_host_address, get_ztdns_config, log, set_loghour
 
 wrapper = '/var/lib/0tdns/vpn_wrapper.sh'
 perform_queries = '/var/lib/0tdns/perform_queries.py'
@@ -251,6 +251,8 @@ def do_hourly_work(hour):
 # round down to an hour - this datetime format is one
 # of the formats accepted by postgres
 hour = strftime('%Y-%m-%d %H:00%z', gmtime())
+set_loghour(hour) # log() function will now prepend messages with hour
+
 if not lock_on_file():
     log('Failed trying to run for {}; {} exists'.format(hour, lockfile))
 else:

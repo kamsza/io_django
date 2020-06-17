@@ -2,6 +2,7 @@ import yaml
 import psycopg2
 import os
 import fcntl
+from time import gmtime, strftime
 
 db_config_path = '/etc/0tdns/db_connection_config.yml'
 logfile = '/var/log/0tdns.log'
@@ -28,7 +29,16 @@ def get_default_host_address(remote_address):
     s.close()
     return hostaddr
 
+loghour = None
+
+def set_loghour(hour):
+    global loghour
+    loghour = hour
+
 def log(msg):
+    msg = '[{}] {}'.format(strftime('%H:%M', gmtime()), msg)
+    if loghour:
+        msg = '[{}]{}'.format(loghour, msg)
     msg = bytearray(msg + '\n', "UTF-8")
     fd = os.open(logfile, os.O_APPEND | os.O_WRONLY | os.O_CREAT)
     try:

@@ -7,7 +7,7 @@ import unbound
 import psycopg2
 
 # our own module used by several scripts in the project
-from ztdnslib import start_db_connection, get_ztdns_config, log
+from ztdnslib import start_db_connection, get_ztdns_config, log, set_loghour
 
 class dns_queries:
     def __init__(self, dns_IP, dns_id, services):
@@ -122,6 +122,7 @@ def resolve_call_back(mydata, status, result):
 
 dups = False
 hour = argv[1]
+set_loghour(hour) # log() function will now prepend messages with hour
 vpn_id = argv[2]
 config = get_ztdns_config()
 
