@@ -77,6 +77,7 @@ def resolve_call_back(mydata, status, result):
 
     # write to database
     try:
+        query.cursor.connection.autocommit = False
         query.cursor.execute('''
         INSERT INTO user_side_responses
             (date, result, dns_id, service_id, vpn_id)
@@ -87,19 +88,37 @@ def resolve_call_back(mydata, status, result):
 
         responses_id = query.cursor.fetchone()[0]
 
-        if status==0 and result.havedata:
+        if status == 0:
+            # an even better solution would be to have a trigger delete
+            # the record when validity reaches 0
+            query.cursor.execute('''
+            UPDATE user_side_queries
+            SET validity = validity - 1
+            WHERE dns_id = %s AND service_id = %s AND vpn_id = %s;
+
+            DELETE FROM user_side_queries
+            WHERE dns_id = %s AND service_id = %s AND vpn_id = %s AND
+                  validity < 1;
+            ''', (query.dns_id, query.service_id, query.vpn_id,
+                  query.dns_id, query.service_id, query.vpn_id))
+
+        query.cursor.connection.commit()
+        query.cursor.connection.autocommit = True
+        
+        if status == 0 and result.havedata:
             for address in result.data.address_list:
                 query.cursor.execute('''
                 INSERT INTO user_side_response (returned_ip, responses_id)
                 VALUES(%s, %s)
                 ''', (address, responses_id))
+
     except psycopg2.IntegrityError:
+        query.cursor.connection.rollback()
         # Unique constraint is stopping us from adding duplicates;
         # This is most likey because back-end has been run multiple times
         # during the same hour (bad configuration or admin running manually
         # after cron), we'll write to logs about that.
         dups = True
-    # no committing, since auto-commit mode is set on the connection
 
 dups = False
 hour = argv[1]
