@@ -55,5 +55,6 @@ class Order(models.Model):
 
 class VPN(models.Model):
     location = models.ForeignKey('Location', on_delete=models.DO_NOTHING)
+    public = models.BooleanField(default=True)
     ovpn_config = models.BinaryField(editable=True)
     ovpn_config_sha256 = models.CharField(max_length=64)

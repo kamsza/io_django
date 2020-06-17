@@ -1,8 +1,9 @@
+import hashlib
 from datetime import datetime
 
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
-from .models import Subscription, Responses, Response, Service, Order, DNS, Queries
+from .models import Subscription, Responses, Response, Service, Order, DNS, Queries, VPN
 from .forms import SubscriptionForm1, SubscriptionForm2, SubscriptionForm3, SubscriptionForm5, SubscriptionForm4
 
 
@@ -77,7 +78,6 @@ def buy_subscription_form_2_view(request, *args, **kwargs):
         return render(request, 'user_page/403.html')
 
     if request.method == 'POST':
-        print('2 ', request.POST)
         if 'filter' in request.POST:
             continent = request.POST.get('continent_choice')
             country = request.POST.get('country_choice')
@@ -107,12 +107,26 @@ def buy_subscription_form_3_view(request, *args, **kwargs):
         return render(request, 'user_page/403.html')
 
     if request.method == 'POST':
-        form = SubscriptionForm3(request.POST)
-        if form.is_valid():
-            request.session['vpns'] = form.cleaned_data['multiple_checkboxes']
-            return redirect('buy subscription form 4')
+        if 'add' in request.POST:
+            form = SubscriptionForm3(request.POST, request.FILES)
+            if form.is_valid():
+                f = form.cleaned_data.get('vpn_file')
+                f.open(mode='rb')
+                lines = f.readlines()
+                config = ''.join(elem.decode("utf-8") for elem in lines)
+                form.add_vpn_config(str(f), config)
+                f.close()
+                print(form.user_vpns)
+            else:
+                print(form.errors)
         else:
-            print(form.errors)
+            form = SubscriptionForm3(request.POST)
+            if form.is_valid():
+                request.session['vpns'] = form.cleaned_data['multiple_checkboxes']
+                request.session['user_vpns'] = form.user_vpns
+                return redirect('buy subscription form 4')
+            else:
+                print(form.errors)
 
     form = SubscriptionForm3()
     return render(request, "user_page/buy_subscription_form_3.html", {'form': form})
@@ -123,7 +137,6 @@ def buy_subscription_form_4_view(request, *args, **kwargs):
         return render(request, 'user_page/403.html')
 
     if request.method == 'POST':
-        print('4 ', request.POST)
         form = SubscriptionForm4(request.POST)
         if 'add' in request.POST:
             email = request.POST.get('user_email')
@@ -144,7 +157,6 @@ def buy_subscription_form_5_view(request, *args, **kwargs):
         return render(request, 'user_page/403.html')
 
     if request.method == 'POST':
-        print('5 ', request.POST)
         form = SubscriptionForm5(request.POST)
         if 'pay' in request.POST:
             form.payment_nr.append('111222333444')
@@ -158,12 +170,16 @@ def buy_subscription_form_5_view(request, *args, **kwargs):
                 dnses = request.session['dnses']
                 user_dnses = request.session['user_dnses']
                 vpns = request.session['vpns']
+                user_vpns = request.session['user_vpns']
                 users = request.session['users']
                 payment_id = request.session['payment_id']
                 service = create_service(label, web_address, ip)
                 sub = create_subscriptions(request.user, users, service)
                 create_order(sub, payment_id)
                 usr_dnses = create_dns(user_dnses)
+                dnses = dnses + usr_dnses
+                usr_vpns = create_vpn(user_vpns)
+                vpns = vpns + usr_vpns
                 create_queries(service, dnses, vpns)
                 return redirect('buy subscription')
             else:
@@ -189,13 +205,21 @@ def create_subscriptions(curr_user, users_ids, service):
         x_sub.save()
     return sub
 
-def create_dns(user_dnses):
+def create_dns(user_dnses_ips):
     dnses = []
-    for ip in user_dnses:
+    for ip in user_dnses_ips:
         x_dns = DNS(IP=ip, public=False)
         x_dns.save()
-        dnses.append(x_dns)
+        dnses.append(x_dns.id)
     return dnses
+
+def create_vpn(user_vpns_confs):
+    vpns = []
+    for config in user_vpns_confs:
+        hash = hashlib.sha256(config.encode('utf-8')).hexdigest()
+        x_vpn = VPN(openv_config=config, openv_config_sha256=hash)
+        vpns.append(x_vpn.id)
+    return vpns
 
 def create_queries(service, dnses, vpns):
     for dns in dnses:

@@ -31,7 +31,7 @@
 {% endblock %}
 
 {% block content %}
-    <form method="POST" action="">
+    <form method="POST" action="" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="my_div">
 
@@ -64,9 +64,13 @@
                         </div>
                     </div>
                 </div>
-
                 {# user's VPN #}
                 <h4 class="mb-3" style="padding-top: 50px">Your VPN (optional)</h4>
+                <ul>
+                    {% for user_vpn in form.file_names %}
+                        <li style="font-family: monospace; font-size: 14px;">{{ user_vpn }}</li>
+                    {% endfor %}
+                </ul>
                 <div class="row">
                     <div class="col-md-4 mb-3" style="margin-top:15px">
                         {{form.vpn_file}}

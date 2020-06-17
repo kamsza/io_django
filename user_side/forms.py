@@ -90,11 +90,18 @@ class SubscriptionForm2(forms.Form):
 class SubscriptionForm3(forms.Form):
     title = '{:30.25} {:30.25}'.format('CONTINENT', 'COUNTRY')
     vpn_checklist = []
-    for vpn in VPN.objects.order_by('location__continent', 'location__country'):
+    file_names = []
+    user_vpns = []
+    for vpn in VPN.objects.filter(public=True).order_by('location__continent', 'location__country'):
         label = '{:30.25} {:30.25}'.format(vpn.location.continent, vpn.location.country)
         vpn_checklist.append((vpn.id, label))
-    multiple_checkboxes = forms.MultipleChoiceField(choices=vpn_checklist, widget=forms.CheckboxSelectMultiple())
+    multiple_checkboxes = forms.MultipleChoiceField(choices=vpn_checklist, required=False, widget=forms.CheckboxSelectMultiple())
     vpn_file = forms.FileField(required=False)
+
+    def add_vpn_config(self, file_name, config):
+        if file_name not in self.file_names:
+            self.file_names.append(file_name)
+            self.user_vpns.append(config)
 
 
 class SubscriptionForm4(forms.Form):
@@ -118,7 +125,7 @@ def get_location_dns(continent, country):
     continent_set = set()
     country_set = set()
     for location in Location.objects.all():
-        if DNS.objects.filter(location=location).count():
+        if DNS.objects.filter(location=location, public=True).count():
             continent_set.add(location.continent)
             country_set.add(location.country)
     all_continents_list = [(c, c) for c in sorted(continent_set)]
@@ -143,11 +150,11 @@ def get_location_dns(continent, country):
 
 def get_dnses(continent, country):
     if country is not None and country != 'All':
-        dns_list = DNS.objects.filter(location__country=country).order_by('location__continent', 'location__country', 'label', 'IP')
+        dns_list = DNS.objects.filter(location__country=country, public=True).order_by('location__continent', 'location__country', 'label', 'IP')
     elif continent is not None and continent != 'All':
-        dns_list = DNS.objects.filter(location__continent=continent).order_by('location__continent', 'location__country', 'label', 'IP')
+        dns_list = DNS.objects.filter(location__continent=continent, public=True).order_by('location__continent', 'location__country', 'label', 'IP')
     else:
-        dns_list = DNS.objects.order_by('location__continent', 'location__country', 'label', 'IP')
+        dns_list = DNS.objects.filter(public=True).order_by('location__continent', 'location__country', 'label', 'IP')
     dns_checklist = []
     for dns in dns_list:
         label = '{:45.43} {:15.15} {:15.12} {:15.12}'.format(dns.label, dns.IP, dns.location.continent, dns.location.country)
