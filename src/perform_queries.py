@@ -45,7 +45,7 @@ def query_planned_queries(cursor, hour, vpn_id):
     
     for dns_IP, dns_id in dnss:
         cursor.execute('''
-        SELECT s.id, s.name
+        SELECT s.id, s.web_address
         FROM user_side_service AS s JOIN user_side_queries AS q
         ON s.id = q.service_id
         WHERE q.vpn_id = %s AND q.dns_id = %s
