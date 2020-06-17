@@ -2,7 +2,7 @@
 
 from sys import argv
 import subprocess
-from os import path, waitpid, unlink
+from os import path, waitpid, unlink, WEXITSTATUS
 from time import gmtime, strftime, sleep
 import re
 
@@ -192,6 +192,7 @@ def do_hourly_work(hour):
             if subnet:
                 break
 
+        exit_status = WEXITSTATUS(exit_status) # read man waitpid if wondering
         if exit_status != 0:
             if exit_status == 2:
                 # this means our perform_queries.py crashed... not good
