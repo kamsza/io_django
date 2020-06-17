@@ -2,15 +2,17 @@
 
 from sys import argv
 import subprocess
-from os import path, waitpid, unlink, WEXITSTATUS
+from os import path, waitpid, unlink, WEXITSTATUS, chown
 from time import gmtime, strftime, sleep
 import re
+from pathlib import Path
+from pwd import getpwnam
 
 import psycopg2
 
 # our own module used by several scripts in the project
 from ztdnslib import start_db_connection, \
-    get_default_host_address, get_ztdns_config, log, set_loghour
+    get_default_host_address, get_ztdns_config, log, set_loghour, logfile
 
 wrapper = '/var/lib/0tdns/vpn_wrapper.sh'
 perform_queries = '/var/lib/0tdns/perform_queries.py'
@@ -248,10 +250,18 @@ def do_hourly_work(hour):
     connection.close()
 
 
+def prepare_logging(hour):
+    set_loghour(hour) # log() function will now prepend messages with hour
+
+    Path(logfile).touch() # ensure logfile exists
+
+    # enable 0tdns user to write to logfile
+    chown(logfile, getpwnam('0tdns').pw_uid, -1)
+
 # round down to an hour - this datetime format is one
 # of the formats accepted by postgres
 hour = strftime('%Y-%m-%d %H:00%z', gmtime())
-set_loghour(hour) # log() function will now prepend messages with hour
+prepare_logging(hour)
 
 if not lock_on_file():
     log('Failed trying to run for {}; {} exists'.format(hour, lockfile))
