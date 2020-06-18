@@ -1,6 +1,5 @@
 #!/bin/python3
 
-from sys import argv
 import subprocess
 from os import path, waitpid, unlink, WEXITSTATUS, chown
 from time import gmtime, strftime, sleep
