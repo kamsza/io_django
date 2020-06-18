@@ -57,7 +57,14 @@
                         <p style="color:red;font-weight: bold;font-size: 14px;text-align: center"> Oops! You need to pay first. </p>
                     {% endif %}
                 {% endif %}
-
+            {# error messages #}
+            {% if form.errors %}
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <p style="text-align: center">{{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+            {% endif %}
                 {# button #}
                 <hr class="mb-4">
                 <button class="btn btn-primary btn-lg btn-block" name="continue" type="submit">Finish</button>

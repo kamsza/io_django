@@ -99,6 +99,21 @@
                     </div>
                 </div>
             </div>
+            {# error messages #}
+            {% if form.errors %}
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <div class="alert alert-danger" style="text-align: center">
+                            <strong>{{ error|escape }}</strong>
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                    <div class="alert alert-danger" style="text-align: center">
+                        <strong>{{ error|escape }}</strong>
+                    </div>
+                {% endfor %}
+            {% endif %}
             {# button #}
             <hr class="mb-4">
             <button class="btn btn-primary btn-lg btn-block" name="continue" type="submit">Continue</button>

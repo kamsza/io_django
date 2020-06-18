@@ -74,6 +74,8 @@ def buy_subscription_form_1_view(request, *args, **kwargs):
             request.session['web_address'] = form.data['web_address']
             request.session['ip'] = form.data['ip']
             return redirect('buy subscription form 2')
+        else:
+            return render(request, "user_page/buy_subscription_form_1.html", {'form': form})
 
     form = SubscriptionForm1()
     return render(request, "user_page/buy_subscription_form_1.html", {'form': form})
@@ -102,7 +104,7 @@ def buy_subscription_form_2_view(request, *args, **kwargs):
                 request.session['user_dnses'] = form.user_dns_list
                 return redirect('buy subscription form 3')
             else:
-                print(form.errors)
+                return render(request, "user_page/buy_subscription_form_2.html", {'form': form})
 
     form = SubscriptionForm2()
     return render(request, "user_page/buy_subscription_form_2.html", {'form': form})
@@ -131,7 +133,7 @@ def buy_subscription_form_3_view(request, *args, **kwargs):
                 request.session['user_vpns'] = form.user_vpns
                 return redirect('buy subscription form 4')
             else:
-                print(form.errors)
+                return render(request, "user_page/buy_subscription_form_3.html", {'form': form})
 
     form = SubscriptionForm3()
     return render(request, "user_page/buy_subscription_form_3.html", {'form': form})
@@ -186,7 +188,7 @@ def buy_subscription_form_5_view(request, *args, **kwargs):
                 usr_vpns = create_vpn(user_vpns)
                 vpns = vpns + usr_vpns
                 create_queries(service, dnses, vpns)
-                return redirect('buy subscription')
+                return redirect('user page')
             else:
                 return render(request, "user_page/buy_subscription_form_5.html", {'form': form, 'action': 'not_payed'})
 

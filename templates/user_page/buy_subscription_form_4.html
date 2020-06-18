@@ -66,6 +66,14 @@
                         <button class="btn btn-secondary  btn-block" name="add" type="submit">add</button>
                     </div>
                 </div>
+                {# error messages #}
+            {% if form.errors %}
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <p style="text-align: center">{{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+            {% endif %}
             {# button #}
             <hr class="mb-4">
             <button class="btn btn-primary btn-lg btn-block" name="continue" type="submit">Continue</button>
