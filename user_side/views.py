@@ -178,8 +178,8 @@ def buy_subscription_form_5_view(request, *args, **kwargs):
     if request.method == 'POST':
         form = SubscriptionForm5(request.POST)
         if 'pay' in request.POST:
-            form.payment_nr.append('111222333444')
-            request.session['payment_id'] = '111222333444'
+            form.payment_nr.append('')
+            request.session['payment_id'] = ''
             return render(request, "user_page/buy_subscription_form_5.html", {'form': form, 'action': 'payed'})
         else:
             if form.payment_nr:
