@@ -139,7 +139,7 @@ def get_available_subnetworks(count, address_ranges):
 
 def do_hourly_work(hour):
     ztdns_config = get_ztdns_config()
-    if ztdns_config['enabled'] != 'yes':
+    if ztdns_config['enabled'] not in ['yes', True]:
         log('0tdns not enabled in the config - exiting')
         return
 
