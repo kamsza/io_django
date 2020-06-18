@@ -78,10 +78,13 @@
                     <div class="col-md-1 mb-3">
                         <button class="btn btn-secondary  btn-block" name="add" type="submit" style="margin-top:15px">add</button>
                     </div>
+                    <div class="col-md-1 mb-3">
+                        <button class="btn btn-secondary  btn-block" name="clear" type="submit" style="margin-top:15px">clear</button>
+                    </div>
                 </div>
             </div>
             {# error messages #}
-            {% if form.errors %}
+            {% if form.err %}
                 {% for field, errors in form.errors.items %}
                     {% for error in errors %}
                         <p style="text-align: center">{{ error }}</p>

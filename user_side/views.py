@@ -97,14 +97,19 @@ def buy_subscription_form_2_view(request, *args, **kwargs):
             form = SubscriptionForm2(request.POST)
             form.add_user_dns(dns_ip)
             return render(request, "user_page/buy_subscription_form_2.html", {'form': form})
+        elif 'clear' in request.POST:
+            form = SubscriptionForm2(request.POST)
+            form.clear()
+            return render(request, "user_page/buy_subscription_form_2.html", {'form': form})
         else:
             form = SubscriptionForm2(request.POST)
             if form.is_valid():
                 request.session['dnses'] = form.cleaned_data['multiple_checkboxes']
-                request.session['user_dnses'] = form.user_dns_list
+                request.session['user_dnses'] = list(form.user_dns_set)
+                form.clear()
                 return redirect('buy subscription form 3')
             else:
-                return render(request, "user_page/buy_subscription_form_2.html", {'form': form})
+                return render(request, "user_page/buy_subscription_form_2.html", {'form': form, 'err': True})
 
     form = SubscriptionForm2()
     return render(request, "user_page/buy_subscription_form_2.html", {'form': form})
@@ -124,13 +129,19 @@ def buy_subscription_form_3_view(request, *args, **kwargs):
                 config = ''.join(elem.decode("utf-8") for elem in lines)
                 form.add_vpn_config(str(f), config)
                 f.close()
+                return render(request, "user_page/buy_subscription_form_3.html", {'form': form})
             else:
-                print(form.errors)
+                return render(request, "user_page/buy_subscription_form_3.html", {'form': form, 'err': True})
+        if 'clear' in request.POST:
+            form = SubscriptionForm3(request.POST)
+            form.clear()
+            return render(request, "user_page/buy_subscription_form_2.html", {'form': form})
         else:
             form = SubscriptionForm3(request.POST)
             if form.is_valid():
                 request.session['vpns'] = form.cleaned_data['multiple_checkboxes']
                 request.session['user_vpns'] = form.user_vpns
+                form.clear()
                 return redirect('buy subscription form 4')
             else:
                 return render(request, "user_page/buy_subscription_form_3.html", {'form': form})
@@ -153,6 +164,7 @@ def buy_subscription_form_4_view(request, *args, **kwargs):
                     form.add_user(email, user.first().id)
         else:
             request.session['users'] = list(form.users_dict.values())
+            form.clear()
             return redirect('buy subscription form 5')
 
     form = SubscriptionForm4()
@@ -188,6 +200,7 @@ def buy_subscription_form_5_view(request, *args, **kwargs):
                 usr_vpns = create_vpn(user_vpns)
                 vpns = vpns + usr_vpns
                 create_queries(service, dnses, vpns)
+                form.clear()
                 return redirect('user page')
             else:
                 return render(request, "user_page/buy_subscription_form_5.html", {'form': form, 'action': 'not_payed'})

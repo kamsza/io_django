@@ -21,7 +21,7 @@ class SubscriptionForm1(forms.Form):
 
 class SubscriptionForm2(forms.Form):
     title = '{:^45.45} {:^15.15} {:^15.15} {:^15.15}'.format('DNS', 'IP', 'CONTINENT', 'COUNTRY')
-    user_dns_list = []
+    user_dns_set = set()
     continent_choice = forms.ChoiceField(required=False, widget=forms.Select(attrs={'class': 'custom-select d-block w-100', 'id': 'dns_continent'}))
     country_choice = forms.ChoiceField(required=False, widget=forms.Select(attrs={'class': 'custom-select d-block w-100', 'id': 'dns_continent'}))
     multiple_checkboxes = forms.MultipleChoiceField(widget=forms.CheckboxSelectMultiple())
@@ -42,7 +42,7 @@ class SubscriptionForm2(forms.Form):
         self.fields['multiple_checkboxes'].choices = self.dns_checklist
 
     def add_user_dns(self, ip):
-        self.user_dns_list.append(ip)
+        self.user_dns_set.add(ip)
 
     def filter(self, continent, country):
         with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -54,6 +54,8 @@ class SubscriptionForm2(forms.Form):
         self.fields['country_choice'].choices = self.country_list
         self.fields['multiple_checkboxes'].choices = self.dns_checklist
 
+    def clear(self):
+        self.user_dns_set.clear()
 
 class SubscriptionForm3(forms.Form):
     title = '{:30.25} {:30.25}'.format('CONTINENT', 'COUNTRY')
@@ -71,6 +73,11 @@ class SubscriptionForm3(forms.Form):
             self.file_names.append(file_name)
             self.user_vpns.append(config)
 
+    def clear(self):
+        self.vpn_checklist.clear()
+        self.file_names.clear()
+        self.user_vpns.clear()
+
 
 class SubscriptionForm4(forms.Form):
     user_email = forms.EmailField(required=False,
@@ -81,12 +88,18 @@ class SubscriptionForm4(forms.Form):
     def add_user(self, email, user):
         self.users_dict[email] = user
 
+    def clear(self):
+        self.users_dict.clear()
+
 
 class SubscriptionForm5(forms.Form):
     payment_nr = []
 
     def add_payment_id(self, _id):
         self.payment_nr.append(_id)
+
+    def clear(self):
+        self.payment_nr.clear()
 
 
 def get_location_dns(continent, country):
