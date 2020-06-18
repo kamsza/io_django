@@ -6,4 +6,4 @@ database: "ztdns"
 enabled: no
 handled_vpns: [1, 2]
 parallel_vpns: 20
-private_addresses: ["10.25.25.0 - 10.25.25.59", "10.25.25.120 - 10.25.25.139"]
+private_addresses: ["10.25.25.0 - 10.25.25.59", "10.25.26.0 - 10.25.26.255"]
