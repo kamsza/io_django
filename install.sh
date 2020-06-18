@@ -22,6 +22,7 @@ install -D -m644 db_connection_config.yml "$INSTALL_ROOT"/etc/0tdns/db_connectio
 # This one would make sense to be executed directly, so it'll go to sbin
 # This happens to also be the script, that gets called by cron
 install -D -m744 src/hourly.py "$INSTALL_ROOT"/usr/sbin/hourly.py
+install -D -m744 src/check_if_done.py "$INSTALL_ROOT"/usr/sbin/check_if_done.py
 
 # This one shall be imported from other scripts
 install -D -m644 src/ztdnslib.py "$INSTALL_ROOT"/usr/lib/python3/dist-packages/ztdnslib.py

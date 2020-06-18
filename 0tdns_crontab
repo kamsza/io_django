@@ -1,2 +1,3 @@
 0 * * * * /usr/sbin/hourly.py # <AUTO_GENERATED_0TDNS_ENTRY> do not remove this '<>' tag
 @reboot /usr/bin/rm /var/lib/0tdns/lockfile # <AUTO_GENERATED_0TDNS_ENTRY> do not remove this '<>' tag
+15,30,45 * * * * /usr/sbin/check_if_done.py --send-mail # <AUTO_GENERATED_0TDNS_ENTRY> do not remove this '<>' tag
