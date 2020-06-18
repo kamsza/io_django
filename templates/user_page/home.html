@@ -40,7 +40,8 @@
 
     {% for service in user_services %}
         <div class="home_container">
-            {% if service.result == 'successful' %}
+            {% if service.result == '-' %}
+            {% elif service.result == 'successful' %}
                <img class="mb-4" src="{% static 'successful.svg' %}">
             {% elif service.result in 'no reponse,internal failure: out of memory,internal failure: vpn_connection_failure,internal failure: process_crash' %}
                <img class="mb-4" src="{% static 'warning.svg' %}">
@@ -59,7 +60,7 @@
                 </tr>
                 <tr>
                     <th style="font-weight: normal;"><p>Last checked:</p></th>
-                    <th style="font-weight: normal;"><p style="margin-left: 40px;">{{  service.web_address }}</p></th>
+                    <th style="font-weight: normal;"><p style="margin-left: 40px;">{{  service.last_checked }}</p></th>
                 </tr>
             </table>
         </div>

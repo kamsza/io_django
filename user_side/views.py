@@ -14,22 +14,28 @@ def home_page_view(request, *args, **kwargs):
 
     current_user = request.user
     subscriptions = Subscription.objects.filter(user_id=current_user, end_date__gte=datetime.now())
-    services = []
+    services = {}
     for subscription in subscriptions:
-        services.append(subscription.service)
-    responses = []
-    for service in services:
+        service = subscription.service
         last_response = Responses.objects.filter(service_id=service.id).order_by('-id').first()
-        if last_response:
-            responses.append(last_response)
+        services[service] = last_response
     user_services = []
-    for registry in responses:
-        returned_ip = Response.objects.filter(responses_id=registry.id).order_by('-id').first()
-        user_services.append({'label': registry.service.label,
-                              'web_address': registry.service.web_address,
+    for service in services:
+        result = services[service]
+        if result:
+            returned_ip = Response.objects.filter(responses_id=result.id).order_by('-id')
+            returned_ip = ' '.join(returned_ip)
+            result_str = result.result
+            date = result.date.strftime('%d-%m-%Y %H:%M:%S')
+        else:
+            returned_ip = '-'
+            result_str = '-'
+            date = '-'
+        user_services.append({'label': service.label,
+                              'web_address': service.web_address,
                               'ip': returned_ip,
-                              'result': registry.result,
-                              'last_checked': registry.date.strftime('%d-%m-%Y %H:%M:%S')
+                              'result': result_str,
+                              'last_checked': date
                               })
 
     return render(request, "user_page/home.html", {'user_services': user_services})
@@ -116,7 +122,6 @@ def buy_subscription_form_3_view(request, *args, **kwargs):
                 config = ''.join(elem.decode("utf-8") for elem in lines)
                 form.add_vpn_config(str(f), config)
                 f.close()
-                print(form.user_vpns)
             else:
                 print(form.errors)
         else:
@@ -217,11 +222,11 @@ def create_vpn(user_vpns_confs):
     vpns = []
     for config in user_vpns_confs:
         hash = hashlib.sha256(config.encode('utf-8')).hexdigest()
-        x_vpn = VPN(openv_config=config, openv_config_sha256=hash)
+        x_vpn = VPN(ovpn_config=config, ovpn_config_sha256=hash, public=False)
         vpns.append(x_vpn.id)
     return vpns
 
 def create_queries(service, dnses, vpns):
     for dns in dnses:
         for vpn in vpns:
-            Queries(service-service, dns_id=dns, vpn_id=vpn, validity=1000).save()
+            Queries(service=service, dns_id=dns, vpn_id=vpn, validity=1000).save()

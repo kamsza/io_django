@@ -10,7 +10,7 @@ class Service(models.Model):
 
 class DNS(models.Model):
     label = models.CharField(max_length=100)
-    location = models.ForeignKey('Location', on_delete=models.DO_NOTHING)
+    location = models.ForeignKey('Location', on_delete=models.DO_NOTHING, null=True)
     IP = models.GenericIPAddressField()
     public = models.BooleanField(default=True)
 
@@ -54,7 +54,7 @@ class Order(models.Model):
     payment_id = models.CharField(max_length=20)
 
 class VPN(models.Model):
-    location = models.ForeignKey('Location', on_delete=models.DO_NOTHING)
+    location = models.ForeignKey('Location', on_delete=models.DO_NOTHING, null=True)
     public = models.BooleanField(default=True)
     ovpn_config = models.BinaryField(editable=True)
     ovpn_config_sha256 = models.CharField(max_length=64)
