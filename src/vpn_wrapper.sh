@@ -76,7 +76,7 @@ if [ $? = 138 ]; then
 
     # run the provided command inside newly created namespace
     # under '0tdns' user;
-    sudo ip netns exec $NAMESPACE_NAME sudo -u 0tdns "$@"
+    ip netns exec $NAMESPACE_NAME sudo -u 0tdns "$@"
 
     if [ $? = 0 ]; then
 	RETVAL=0
