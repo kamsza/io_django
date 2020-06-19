@@ -1,0 +1,45 @@
+.flex-container-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-container {
+  display: flex;
+}
+
+.profile-userpic img {
+  float: none;
+  margin: auto;
+  width: 230px;
+  height: 300px;
+  -webkit-border-radius: 16% !important;
+  -moz-border-radius: 16% !important;
+  border-radius: 16% !important;
+}
+
+.profile-usertitle-name {
+  margin: auto;
+  color: #5a7391;
+  font-size: 40px;
+  font-weight: 600;
+  margin-bottom: 7px;
+}
+
+.profile-userbuttons .btn {
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 15px;
+  margin-right: 5px;
+}
+
+.profile-userbuttons .btn:last-child {
+  margin-right: 0px;
+}
+
+/* Profile Content */
+.profile-content {
+  padding: 20px;
+  background: #fff;
+  min-height: 460px;
+}

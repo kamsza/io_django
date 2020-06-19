@@ -1,10 +1,11 @@
 import hashlib
 from datetime import datetime
 
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from .models import Subscription, Responses, Response, Service, Order, DNS, Queries, VPN
-from .forms import SubscriptionForm1, SubscriptionForm2, SubscriptionForm3, SubscriptionForm5, SubscriptionForm4
+from .forms import SubscriptionForm1, SubscriptionForm2, SubscriptionForm3, SubscriptionForm5, SubscriptionForm4, StatisticsForm, ChangePasswordForm
 
 
 # Create your views here.
@@ -24,11 +25,8 @@ def home_page_view(request, *args, **kwargs):
         result = services[service]
         if result:
             returned_ip = Response.objects.filter(responses_id=result.id).order_by('-id')
-            result_str = result.result
-            result_str = 'internal failure' if result_str.startswith('internal failure') else result_str
-            # result_str =
-            # result_str = 'wrong IP' if service.IP in returned_ip else result_str
             returned_ip = ' '.join(returned_ip)
+            result_str = result.result
             date = result.date.strftime('%d-%m-%Y %H:%M:%S')
         else:
             returned_ip = '-'
@@ -47,13 +45,62 @@ def home_page_view(request, *args, **kwargs):
 def profile_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
         return render(request, 'user_page/403.html')
-    return render(request, "user_page/profile.html", {})
+
+    username = request.user.username
+
+    if request.method == 'POST':
+        form = ChangePasswordForm(request.POST)
+        if form.is_valid():
+            return HttpResponseRedirect('/password changed/')
+    else:
+        form = ChangePasswordForm()
+
+    return render(request, "user_page/profile.html", {'username': username})
 
 
 def statistics_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
         return render(request, 'user_page/403.html')
-    return render(request, "user_page/statistics.html", {})
+
+    current_user = request.user
+    services = []
+
+    subscriptions = Subscription.objects.filter(user_id=current_user, end_date__gte=datetime.now())
+    for subscription in subscriptions:
+        services.append(subscription.service)
+    chosen_service = services[0].label
+
+    if request.method == 'POST':
+        if 'filter' in request.POST:
+            chosen_service = request.POST.get('service_choice')
+            form = StatisticsForm(current_user, request.POST)
+            form.filter(chosen_service)
+            return render(request, "user_page/statistics.html", {'form': form})
+        else:
+            form = StatisticsForm(current_user, request.POST)
+            if not form.is_valid():
+                print(form.errors)
+    form = StatisticsForm(current_user)
+
+    responses = Responses.objects.filter(service__label=chosen_service)
+    data_table = []
+    error_count = 0
+    success_count = 0
+    failure_count = 0
+    for response in responses:
+        data_table.append({'service_name': response.service.label, 'dns_name': response.dns.label,
+                           'vpn_country': response.vpn.location.country, 'result': response.result,
+                           'date': response.date})
+        if response.result == 'successful':
+            success_count += 1
+        elif response.result in 'no reponse,internal failure: out of memory,internal failure: vpn_connection_failure,internal failure: process_crash':
+            failure_count += 1
+        else:
+            error_count += 1
+
+    return render(request, "user_page/statistics.html", {'form': form, 'data_table': data_table,
+                                                         'success_count': success_count, 'failure_count': failure_count,
+                                                         'error_count': error_count})
 
 
 def buy_subscription_view(request, *args, **kwargs):
@@ -127,22 +174,18 @@ def buy_subscription_form_3_view(request, *args, **kwargs):
             form = SubscriptionForm3(request.POST, request.FILES)
             if form.is_valid():
                 f = form.cleaned_data.get('vpn_file')
-                if f:
-                    f.open(mode='rb')
-                    lines = f.readlines()
-                    config = ''.join(elem.decode("utf-8") for elem in lines)
-                    form.add_vpn_config(str(f), config)
-                    f.close()
-                else:
-                    form.add_error('vpn_file', 'File not chosen')
-                    return render(request, "user_page/buy_subscription_form_3.html", {'form': form, 'err': True})
+                f.open(mode='rb')
+                lines = f.readlines()
+                config = ''.join(elem.decode("utf-8") for elem in lines)
+                form.add_vpn_config(str(f), config)
+                f.close()
                 return render(request, "user_page/buy_subscription_form_3.html", {'form': form})
             else:
                 return render(request, "user_page/buy_subscription_form_3.html", {'form': form, 'err': True})
         if 'clear' in request.POST:
             form = SubscriptionForm3(request.POST)
             form.clear()
-            return render(request, "user_page/buy_subscription_form_3.html", {'form': form})
+            return render(request, "user_page/buy_subscription_form_2.html", {'form': form})
         else:
             form = SubscriptionForm3(request.POST)
             if form.is_valid():
@@ -245,7 +288,6 @@ def create_vpn(user_vpns_confs):
     for config in user_vpns_confs:
         hash = hashlib.sha256(config.encode('utf-8')).hexdigest()
         x_vpn = VPN(ovpn_config=config, ovpn_config_sha256=hash, public=False)
-        x_vpn.save()
         vpns.append(x_vpn.id)
     return vpns
 
