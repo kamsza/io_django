@@ -24,8 +24,11 @@ def home_page_view(request, *args, **kwargs):
         result = services[service]
         if result:
             returned_ip = Response.objects.filter(responses_id=result.id).order_by('-id')
-            returned_ip = ' '.join(returned_ip)
             result_str = result.result
+            result_str = 'internal failure' if result_str.startswith('internal failure') else result_str
+            # result_str =
+            # result_str = 'wrong IP' if service.IP in returned_ip else result_str
+            returned_ip = ' '.join(returned_ip)
             date = result.date.strftime('%d-%m-%Y %H:%M:%S')
         else:
             returned_ip = '-'
@@ -124,18 +127,22 @@ def buy_subscription_form_3_view(request, *args, **kwargs):
             form = SubscriptionForm3(request.POST, request.FILES)
             if form.is_valid():
                 f = form.cleaned_data.get('vpn_file')
-                f.open(mode='rb')
-                lines = f.readlines()
-                config = ''.join(elem.decode("utf-8") for elem in lines)
-                form.add_vpn_config(str(f), config)
-                f.close()
+                if f:
+                    f.open(mode='rb')
+                    lines = f.readlines()
+                    config = ''.join(elem.decode("utf-8") for elem in lines)
+                    form.add_vpn_config(str(f), config)
+                    f.close()
+                else:
+                    form.add_error('vpn_file', 'File not chosen')
+                    return render(request, "user_page/buy_subscription_form_3.html", {'form': form, 'err': True})
                 return render(request, "user_page/buy_subscription_form_3.html", {'form': form})
             else:
                 return render(request, "user_page/buy_subscription_form_3.html", {'form': form, 'err': True})
         if 'clear' in request.POST:
             form = SubscriptionForm3(request.POST)
             form.clear()
-            return render(request, "user_page/buy_subscription_form_2.html", {'form': form})
+            return render(request, "user_page/buy_subscription_form_3.html", {'form': form})
         else:
             form = SubscriptionForm3(request.POST)
             if form.is_valid():
@@ -238,6 +245,7 @@ def create_vpn(user_vpns_confs):
     for config in user_vpns_confs:
         hash = hashlib.sha256(config.encode('utf-8')).hexdigest()
         x_vpn = VPN(ovpn_config=config, ovpn_config_sha256=hash, public=False)
+        x_vpn.save()
         vpns.append(x_vpn.id)
     return vpns
 

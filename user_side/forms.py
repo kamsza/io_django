@@ -62,9 +62,12 @@ class SubscriptionForm3(forms.Form):
     vpn_checklist = []
     file_names = []
     user_vpns = []
+    label_set = set()
     for vpn in VPN.objects.filter(public=True).order_by('location__continent', 'location__country'):
         label = '{:30.25} {:30.25}'.format(vpn.location.continent, vpn.location.country)
-        vpn_checklist.append((vpn.id, label))
+        if label not in label_set:
+            label_set.add(label)
+            vpn_checklist.append((vpn.id, label))
     multiple_checkboxes = forms.MultipleChoiceField(choices=vpn_checklist, required=False, widget=forms.CheckboxSelectMultiple())
     vpn_file = forms.FileField(required=False)
 
