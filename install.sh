@@ -19,10 +19,11 @@ install -D -m744 src/netns-script "$INSTALL_ROOT"/var/lib/0tdns/netns-script
 install -D -m755 src/perform_queries.py "$INSTALL_ROOT"/var/lib/0tdns/perform_queries.py
 install -D -m644 db_connection_config.yml "$INSTALL_ROOT"/etc/0tdns/db_connection_config.yml
 
-# This one would make sense to be executed directly, so it'll go to sbin
-# This happens to also be the script, that gets called by cron
+# Those would make sense to be executed directly, so they'll go to (s)bin
+# Those happen to also be the scripts, that get called by cron
 install -D -m744 src/hourly.py "$INSTALL_ROOT"/usr/sbin/hourly.py
 install -D -m744 src/check_if_done.py "$INSTALL_ROOT"/usr/sbin/check_if_done.py
+install -D -m744 src/send_emails.py "$INSTALL_ROOT"/usr/bin/send_emails.py
 
 # This one shall be imported from other scripts
 install -D -m644 src/ztdnslib.py "$INSTALL_ROOT"/usr/lib/python3/dist-packages/ztdnslib.py
