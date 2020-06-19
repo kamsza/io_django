@@ -1,25 +1,6 @@
 from django import forms
-from .models import DNS, VPN, Location, Subscription
+from .models import DNS, VPN, Location
 import concurrent.futures
-
-
-class ChangePasswordForm(forms.Form):
-    password1 = forms.CharField(label='new password', max_length=25)
-    password2 = forms.CharField(label='confirm new password', max_length=25)
-
-
-class StatisticsForm(forms.Form):
-    service_choice = forms.ChoiceField(required=False, widget=forms.Select(attrs={'class': 'custom-select d-block w-100', 'id': 'service_label'}))
-
-    def __init__(self, user, *args, **kwargs):
-        super(StatisticsForm, self).__init__(*args, **kwargs)
-        self.user = user
-        self.user_services_list = get_user_services(None, user)
-        self.fields['service_choice'].choices = self.user_services_list
-
-    def filter(self, label):
-        self.user_services_list = get_user_services(label, self.user)
-        self.fields['service_choice'].choices = self.user_services_list
 
 
 class SubscriptionForm1(forms.Form):
@@ -81,9 +62,12 @@ class SubscriptionForm3(forms.Form):
     vpn_checklist = []
     file_names = []
     user_vpns = []
+    label_set = set()
     for vpn in VPN.objects.filter(public=True).order_by('location__continent', 'location__country'):
         label = '{:30.25} {:30.25}'.format(vpn.location.continent, vpn.location.country)
-        vpn_checklist.append((vpn.id, label))
+        if label not in label_set:
+            label_set.add(label)
+            vpn_checklist.append((vpn.id, label))
     multiple_checkboxes = forms.MultipleChoiceField(choices=vpn_checklist, required=False, widget=forms.CheckboxSelectMultiple())
     vpn_file = forms.FileField(required=False)
 
@@ -160,12 +144,3 @@ def get_dnses(continent, country):
         label = '{:45.43} {:15.15} {:15.12} {:15.12}'.format(dns.label, dns.IP, dns.location.continent, dns.location.country)
         dns_checklist.append((dns.id, label))
     return dns_checklist
-
-
-def get_user_services(label, user):
-    if label is not None:
-        user_subscription_list = Subscription.objects.filter(service__label=label, user_id=user).order_by('service__label')
-    else:
-        user_subscription_list = Subscription.objects.filter(user_id=user).order_by('service__label')
-    result = [(subscription.service.label, subscription.service.label) for subscription in user_subscription_list]
-    return result

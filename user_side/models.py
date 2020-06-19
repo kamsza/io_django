@@ -4,20 +4,19 @@ from django.contrib.auth.models import User
 
 # Create your models here.
 class Service(models.Model):
-    label = models.CharField(max_length=100)
-    web_address = models.CharField(max_length=100)
+    name = models.CharField(max_length=100)
     IP = models.GenericIPAddressField()
 
 class DNS(models.Model):
     label = models.CharField(max_length=100)
-    location = models.ForeignKey('Location', on_delete=models.DO_NOTHING, null=True)
+    location = models.ForeignKey('Location', on_delete=models.DO_NOTHING)
     IP = models.GenericIPAddressField()
-    public = models.BooleanField(default=True)
 
 class Location(models.Model):
     continent = models.CharField(max_length=20)
     country = models.CharField(max_length=20)
     address = models.CharField(max_length=50, null=True)
+
 
 class Queries(models.Model):
     service = models.ForeignKey('Service', on_delete=models.CASCADE)
@@ -31,11 +30,6 @@ class Responses(models.Model):
     vpn = models.ForeignKey('VPN', on_delete=models.SET_NULL, null=True)
     date = models.DateTimeField(default=timezone.now)
     result = models.CharField(max_length=50)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['dns', 'date', 'vpn', 'service'], name='unique row constraint')
-        ]
 
 class Response(models.Model):
     responses = models.ForeignKey('Responses', on_delete=models.CASCADE)
@@ -54,7 +48,6 @@ class Order(models.Model):
     payment_id = models.CharField(max_length=20)
 
 class VPN(models.Model):
-    location = models.ForeignKey('Location', on_delete=models.DO_NOTHING, null=True)
-    public = models.BooleanField(default=True)
-    ovpn_config = models.BinaryField(editable=True)
+    location = models.ForeignKey('Location', on_delete=models.DO_NOTHING)
+    ovpn_config = models.BinaryField()
     ovpn_config_sha256 = models.CharField(max_length=64)
