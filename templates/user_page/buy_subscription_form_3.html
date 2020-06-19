@@ -84,18 +84,11 @@
                 </div>
             </div>
             {# error messages #}
-            {% if err %}
-                {% for field in form %}
-                    {% for error in field.errors %}
-                        <div class="alert alert-danger" style="text-align: center">
-                            <strong>{{ error|escape }}</strong>
-                        </div>
+            {% if form.err %}
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <p style="text-align: center">{{ error }}</p>
                     {% endfor %}
-                {% endfor %}
-                {% for error in form.non_field_errors %}
-                    <div class="alert alert-danger" style="text-align: center">
-                        <strong>{{ error|escape }}</strong>
-                    </div>
                 {% endfor %}
             {% endif %}
             {# button #}

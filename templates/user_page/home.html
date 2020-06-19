@@ -29,8 +29,6 @@
 {% endblock %}
 
 {% block content %}
-    <main role="main" class="home_containers">
-
     {% if not user_services %}
         <div class="nosub_text">
             <p> You have no active subscriptions </p>
@@ -42,16 +40,29 @@
 
     {% for service in user_services %}
         <div class="home_container">
-            {% if service.status == 'OK' %}
-               <img class="mb-4" src="{% static 'result_ok.svg' %}">
-            {% elif service.status == 'WRONG IP' %}
-               <img class="mb-4" src="{% static 'result_wrong.svg' %}">
+            {% if service.result == '-' %}
+            {% elif service.result == 'successful' %}
+               <img class="mb-4" src="{% static 'successful.svg' %}">
+            {% elif service.result in 'no reponse,internal failure: out of memory,internal failure: vpn_connection_failure,internal failure: process_crash' %}
+               <img class="mb-4" src="{% static 'warning.svg' %}">
+            {% else %}
+               <img class="mb-4" src="{% static 'error.svg' %}">
             {% endif %}
             <h1> {{ service.label }}</h1>
-            <p> IP: {{  service.ip }} </p>
-            <p> Status: {{  service.status }} </p>
-            <p> Last checked: {{  service.last_checked }} </p>
+            <table>
+                <tr>
+                    <th style="font-weight: normal;"><p>Web address:</p></th>
+                    <th style="font-weight: normal;"><p style="margin-left: 40px;">{{  service.web_address }}</p></th>
+                </tr>
+                <tr>
+                    <th style="font-weight: normal;"><p>Result:</p></th>
+                    <th style="font-weight: normal;"><p style="margin-left: 40px;">{{  service.result }}</p></th>
+                </tr>
+                <tr>
+                    <th style="font-weight: normal;"><p>Last checked:</p></th>
+                    <th style="font-weight: normal;"><p style="margin-left: 40px;">{{  service.last_checked }}</p></th>
+                </tr>
+            </table>
         </div>
     {% endfor %}
-    </main>
 {% endblock %}

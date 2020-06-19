@@ -4,7 +4,7 @@
 <head>
      <link href="{% static 'bootstrap.min.css' %}" rel="stylesheet">
      <link href="{% static 'dashboard.css' %}" rel="stylesheet">
-
+     <link href="{% static 'user_home_style.css' %}" rel="stylesheet">
     {% block header %}
      <!--EXTRA HEAD STUFF GOES HERE -->
     {% endblock %}
@@ -12,13 +12,13 @@
 <body>
     <!-- TOP BAR -->
     <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 navbar-expand-lg">
-      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">DNS checker</a>
+      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="{% url 'user page' %}">DNS checker</a>
       <ul class="navbar-nav ml-auto">
           <li class="nav-item">
             <a class="nav-link" href="{% url 'user profile' %}">{{request.user.username}}</a>
           </li>
           <li class="nav-item" style="padding-left:1em; padding-right: 1em">
-            <a class="nav-link" href="{% url 'logout'%}">Log out</a>
+            <a class="nav-link" href="{% url 'logout'%}">log out</a>
           </li>
       </ul>
     </nav>
@@ -28,7 +28,7 @@
       <div class="row">
         <nav class="col-md-2 d-none d-md-block bg-light sidebar">
           <div class="sidebar-sticky">
-            <ul class="nav flex-column" style="line-height:2.2;">
+            <ul class="nav flex-column" style="line-height:2.2; margin-top:50px; position:fixed;">
                   {% block sidebar %}
                 <!--LEFT BAR INGREDIENTS GOES HERE -->
                   {% endblock %}
