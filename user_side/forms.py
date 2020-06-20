@@ -14,11 +14,18 @@ class StatisticsForm(forms.Form):
     def __init__(self, user, *args, **kwargs):
         super(StatisticsForm, self).__init__(*args, **kwargs)
         self.user = user
-        self.user_services_list = get_user_services(None, user)
+        service_list = Subscription.objects.filter(user_id=self.user).order_by('service__label')
+        service_list = [(subscription.service.label, subscription.service.label) for subscription in service_list]
+        self.user_services_list = service_list
         self.fields['service_choice'].choices = self.user_services_list
 
     def filter(self, label):
-        self.user_services_list = get_user_services(label, self.user)
+        service_list = Subscription.objects.filter(user_id=self.user).order_by('service__label')
+        service_list = [(subscription.service.label, subscription.service.label) for subscription in service_list]
+        if (label, label) in service_list:
+            service_list.remove((label, label))
+            service_list = [(label, label)] + service_list
+        self.user_services_list = service_list
         self.fields['service_choice'].choices = self.user_services_list
 
 

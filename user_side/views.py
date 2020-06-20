@@ -63,60 +63,6 @@ def profile_view(request, *args, **kwargs):
     return render(request, "user_page/profile.html", {'username': username})
 
 
-# def statistics_view(request, *args, **kwargs):
-#     if not request.user.is_authenticated:
-#         return render(request, 'user_page/403.html')
-#
-#     current_user = request.user
-#     services = []
-#
-#     subscriptions = Subscription.objects.filter(user_id=current_user, end_date__gte=datetime.now())
-#     for subscription in subscriptions:
-#         services.append(subscription.service)
-#     chosen_service = services[0].label
-#
-#     if request.method == 'POST':
-#         if 'filter' in request.POST:
-#             chosen_service = request.POST.get('service_choice')
-#             form = StatisticsForm(current_user, request.POST)
-#             form.filter(chosen_service)
-#             return render(request, "user_page/statistics.html", {'form': form})
-#         else:
-#             form = StatisticsForm(current_user, request.POST)
-#             if not form.is_valid():
-#                 print(form.errors)
-#     form = StatisticsForm(current_user)
-#
-#     selectStats = '''select uss.label as serviceName, usd.label as dnsName, usl.country, usr.result, usr.date from user_side_responses usr
-# inner join user_side_service uss on usr.service_id = uss.id
-# inner join user_side_dns usd on usr.dns_id = usd.id
-# inner join user_side_vpn usv on usr.vpn_id = usv.id
-# inner join user_side_location usl on usv.location_id = usl.id
-# inner join user_side_response resp on usr.id = resp.responses_id
-# where uss.label like '%''' + chosen_service + "%';"
-#     cur = getStats(selectStats)
-#     data_table = []
-#     error_count = 0
-#     success_count = 0
-#     failure_count = 0
-#
-#     for row in cur:
-#         # service_ip = row[5]
-#         # returned_ip = row[6]
-#         # print(service_ip, returned_ip)
-#         data_table.append({'service_name': row[0], 'dns_name': row[1], 'vpn_country': row[2], 'result': row[3], 'date': row[4]})
-#         if row[3] == 'successful':
-#             success_count += 1
-#         elif row[3] in 'no reponse,internal failure: out of memory,internal failure: vpn_connection_failure,internal failure: process_crash':
-#             failure_count += 1
-#         else:
-#             error_count += 1
-#
-#     return render(request, "user_page/statistics.html", {'form': form, 'data_table': data_table,
-#                                                          'success_count': success_count, 'failure_count': failure_count,
-#                                                          'error_count': error_count})
-
-
 def statistics_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
         return render(request, 'user_page/403.html')
@@ -178,31 +124,50 @@ def statistics_view(request, *args, **kwargs):
     subscriptions = Subscription.objects.filter(user_id=current_user, end_date__gte=datetime.now())
     for subscription in subscriptions:
         services.append(subscription.service)
-    chosen_service = services[0].label
+    if services:
+        chosen_service = services[0].label
+    else:
+        chosen_service = None
 
     if request.method == 'POST':
         if 'filter' in request.POST:
             chosen_service = request.POST.get('service_choice')
             form = StatisticsForm(current_user, request.POST)
             form.filter(chosen_service)
-            return render(request, "user_page/statistics.html", {'form': form})
+            data_table, success_count, failure_count, error_count = get_statistics_data(chosen_service)
+
+            return render(request, "user_page/statistics.html", {'form': form, 'data_table': data_table,
+                                                                 'success_count': success_count, 'failure_count': failure_count,
+                                                                 'error_count': error_count})
+
         else:
             form = StatisticsForm(current_user, request.POST)
             if not form.is_valid():
                 print(form.errors)
     form = StatisticsForm(current_user)
 
+    data_table, success_count, failure_count, error_count = get_statistics_data(chosen_service)
+
+    return render(request, "user_page/statistics.html", {'form': form, 'data_table': data_table,
+                                                         'success_count': success_count, 'failure_count': failure_count,
+                                                         'error_count': error_count})
+
+
+def get_statistics_data(chosen_service):
+    if not chosen_service:
+        return ([],0,0,0)
+
     selectStats = '''select uss.label as serviceName, usd.label as dnsName, usl.country, usr.result, usr.date, 
     uss."IP", resp.returned_ip  from user_side_responses usr
-inner join user_side_service uss on usr.service_id = uss.id
-inner join user_side_dns usd on usr.dns_id = usd.id
-inner join user_side_vpn usv on usr.vpn_id = usv.id
-inner join user_side_location usl on usv.location_id = usl.id
-left join user_side_response resp on usr.id = resp.responses_id
-where uss.label like '%''' + chosen_service + "%'" + " order by usr.date desc;"
-
+    inner join user_side_service uss on usr.service_id = uss.id
+    inner join user_side_dns usd on usr.dns_id = usd.id
+    inner join user_side_vpn usv on usr.vpn_id = usv.id
+    inner join user_side_location usl on usv.location_id = usl.id
+    left join user_side_response resp on usr.id = resp.responses_id
+    where uss.label like '%''' + chosen_service + "%'" + " order by usr.date desc;"
 
     cur = getStats(selectStats)
+
     data_table = []
     error_count = 0
     success_count = 0
@@ -224,10 +189,7 @@ where uss.label like '%''' + chosen_service + "%'" + " order by usr.date desc;"
         else:
             error_count += 1
 
-    return render(request, "user_page/statistics.html", {'form': form, 'data_table': data_table,
-                                                         'success_count': success_count, 'failure_count': failure_count,
-                                                         'error_count': error_count})
-
+    return (data_table, success_count, failure_count, error_count)
 
 def buy_subscription_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
@@ -302,7 +264,7 @@ def buy_subscription_form_3_view(request, *args, **kwargs):
                 f = form.cleaned_data.get('vpn_file')
                 f.open(mode='rb')
                 lines = f.readlines()
-                config = ''.join(elem.decode("utf-8") for elem in lines)
+                config = ''.join(elem for elem in lines)
                 form.add_vpn_config(str(f), config)
                 f.close()
                 return render(request, "user_page/buy_subscription_form_3.html", {'form': form})
