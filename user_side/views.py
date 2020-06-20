@@ -1,6 +1,8 @@
 import hashlib
 from datetime import datetime
-
+import time
+import yaml
+import psycopg2
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
@@ -25,7 +27,8 @@ def home_page_view(request, *args, **kwargs):
         result = services[service]
         if result:
             returned_ip = Response.objects.filter(responses_id=result.id).order_by('-id')
-            returned_ip = ' '.join(returned_ip)
+             # returned_ip = ' '.join(returned_ip)
+            returned_ip = ' '
             result_str = result.result
             date = result.date.strftime('%d-%m-%Y %H:%M:%S')
         else:
@@ -82,18 +85,24 @@ def statistics_view(request, *args, **kwargs):
                 print(form.errors)
     form = StatisticsForm(current_user)
 
-    responses = Responses.objects.filter(service__label=chosen_service)
+    selectStats = '''select uss.label as serviceName, usd.label as dnsName, usl.country, usr.result, usr.date from user_side_responses usr
+inner join user_side_service uss on usr.service_id = uss.id
+inner join user_side_dns usd on usr.dns_id = usd.id
+inner join user_side_vpn usv on usr.vpn_id = usv.id
+inner join user_side_location usl on usv.location_id = usl.id
+where uss.label like '%''' + chosen_service + "%';"
+    cur = getStats(selectStats)
     data_table = []
     error_count = 0
     success_count = 0
     failure_count = 0
-    for response in responses:
-        data_table.append({'service_name': response.service.label, 'dns_name': response.dns.label,
-                           'vpn_country': response.vpn.location.country, 'result': response.result,
-                           'date': response.date})
-        if response.result == 'successful':
+
+    for row in cur:
+        data_table.append({'service_name': row[0], 'dns_name': row[1], 'vpn_country': row[2], 'result': row[3],
+                          'date': row[4]})
+        if row[3] == 'successful':
             success_count += 1
-        elif response.result in 'no reponse,internal failure: out of memory,internal failure: vpn_connection_failure,internal failure: process_crash':
+        elif row[3] in 'no reponse,internal failure: out of memory,internal failure: vpn_connection_failure,internal failure: process_crash':
             failure_count += 1
         else:
             error_count += 1
@@ -295,3 +304,12 @@ def create_queries(service, dnses, vpns):
     for dns in dnses:
         for vpn in vpns:
             Queries(service=service, dns_id=dns, vpn_id=vpn, validity=1000).save()
+
+def getStats(selectStats):
+    # config = yaml.safe_load(open("db_connection_config.yml", 'r'))
+
+    connection = psycopg2.connect(user='postgres', password='dobre haslo jest dlugie latwe do zapamietania i nieupublicznione na githubie',
+                                  host='185.243.53.245', port='5432', database='ztdns')
+    cursor = connection.cursor()
+    cursor.execute(selectStats)
+    return cursor.fetchall()
