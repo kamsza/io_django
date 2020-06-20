@@ -61,7 +61,7 @@
         </thead>
         <tbody>
             {% for response in data_table %}
-                {% if response.result == 'successful' %}
+                {% if response.result == 'successful'%}
                    <tr style="background-color: #08f26e">
                         <td>{{ response.service_name}}</td>
                         <td>{{ response.dns_name }}</td>

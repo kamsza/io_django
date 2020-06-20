@@ -43,7 +43,7 @@
             {% if service.result == '-' %}
             {% elif service.result == 'successful' %}
                <img class="mb-4" src="{% static 'successful.svg' %}">
-            {% elif service.result in 'no reponse,internal failure: out of memory,internal failure: vpn_connection_failure,internal failure: process_crash' %}
+            {% elif service.result in 'no reponse,internal failure occurred,DNS error occurred' %}
                <img class="mb-4" src="{% static 'warning.svg' %}">
             {% else %}
                <img class="mb-4" src="{% static 'error.svg' %}">
@@ -56,7 +56,7 @@
                 </tr>
                 <tr>
                     <th style="font-weight: normal;"><p>Result:</p></th>
-                    <th style="font-weight: normal;"><p style="margin-left: 40px;">{{  service.result }}</p></th>
+                    <th style="font-weight: normal;"><p style="margin-left: 40px; white-space: pre">{{  service.result }}</p></th>
                 </tr>
                 <tr>
                     <th style="font-weight: normal;"><p>Last checked:</p></th>

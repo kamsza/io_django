@@ -1,7 +1,5 @@
 import hashlib
 from datetime import datetime
-import time
-import yaml
 import psycopg2
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
@@ -27,9 +25,13 @@ def home_page_view(request, *args, **kwargs):
         result = services[service]
         if result:
             returned_ip = Response.objects.filter(responses_id=result.id).order_by('-id')
-             # returned_ip = ' '.join(returned_ip)
-            returned_ip = ' '
             result_str = result.result
+            if result_str == 'successful' and returned_ip.first().returned_ip != service.IP:
+                result_str = 'wrong IP          expected: ' + service.IP + '          got: ' + returned_ip.first().returned_ip
+            elif result_str.startswith('internal failure'):
+                result_str = 'internal failure occurred'
+            elif result_str.startswith('DNS error'):
+                result_str = 'DNS error occurred'
             date = result.date.strftime('%d-%m-%Y %H:%M:%S')
         else:
             returned_ip = '-'
@@ -59,6 +61,60 @@ def profile_view(request, *args, **kwargs):
         form = ChangePasswordForm()
 
     return render(request, "user_page/profile.html", {'username': username})
+
+
+# def statistics_view(request, *args, **kwargs):
+#     if not request.user.is_authenticated:
+#         return render(request, 'user_page/403.html')
+#
+#     current_user = request.user
+#     services = []
+#
+#     subscriptions = Subscription.objects.filter(user_id=current_user, end_date__gte=datetime.now())
+#     for subscription in subscriptions:
+#         services.append(subscription.service)
+#     chosen_service = services[0].label
+#
+#     if request.method == 'POST':
+#         if 'filter' in request.POST:
+#             chosen_service = request.POST.get('service_choice')
+#             form = StatisticsForm(current_user, request.POST)
+#             form.filter(chosen_service)
+#             return render(request, "user_page/statistics.html", {'form': form})
+#         else:
+#             form = StatisticsForm(current_user, request.POST)
+#             if not form.is_valid():
+#                 print(form.errors)
+#     form = StatisticsForm(current_user)
+#
+#     selectStats = '''select uss.label as serviceName, usd.label as dnsName, usl.country, usr.result, usr.date from user_side_responses usr
+# inner join user_side_service uss on usr.service_id = uss.id
+# inner join user_side_dns usd on usr.dns_id = usd.id
+# inner join user_side_vpn usv on usr.vpn_id = usv.id
+# inner join user_side_location usl on usv.location_id = usl.id
+# inner join user_side_response resp on usr.id = resp.responses_id
+# where uss.label like '%''' + chosen_service + "%';"
+#     cur = getStats(selectStats)
+#     data_table = []
+#     error_count = 0
+#     success_count = 0
+#     failure_count = 0
+#
+#     for row in cur:
+#         # service_ip = row[5]
+#         # returned_ip = row[6]
+#         # print(service_ip, returned_ip)
+#         data_table.append({'service_name': row[0], 'dns_name': row[1], 'vpn_country': row[2], 'result': row[3], 'date': row[4]})
+#         if row[3] == 'successful':
+#             success_count += 1
+#         elif row[3] in 'no reponse,internal failure: out of memory,internal failure: vpn_connection_failure,internal failure: process_crash':
+#             failure_count += 1
+#         else:
+#             error_count += 1
+#
+#     return render(request, "user_page/statistics.html", {'form': form, 'data_table': data_table,
+#                                                          'success_count': success_count, 'failure_count': failure_count,
+#                                                          'error_count': error_count})
 
 
 def statistics_view(request, *args, **kwargs):
@@ -101,6 +157,67 @@ where uss.label like '%''' + chosen_service + "%';"
         data_table.append({'service_name': row[0], 'dns_name': row[1], 'vpn_country': row[2], 'result': row[3],
                           'date': row[4]})
         if row[3] == 'successful':
+            success_count += 1
+        elif row[3] in 'no reponse,internal failure: out of memory,internal failure: vpn_connection_failure,internal failure: process_crash':
+            failure_count += 1
+        else:
+            error_count += 1
+
+    return render(request, "user_page/statistics.html", {'form': form, 'data_table': data_table,
+                                                         'success_count': success_count, 'failure_count': failure_count,
+                                                         'error_count': error_count})
+
+
+def statistics_view(request, *args, **kwargs):
+    if not request.user.is_authenticated:
+        return render(request, 'user_page/403.html')
+
+    current_user = request.user
+    services = []
+
+    subscriptions = Subscription.objects.filter(user_id=current_user, end_date__gte=datetime.now())
+    for subscription in subscriptions:
+        services.append(subscription.service)
+    chosen_service = services[0].label
+
+    if request.method == 'POST':
+        if 'filter' in request.POST:
+            chosen_service = request.POST.get('service_choice')
+            form = StatisticsForm(current_user, request.POST)
+            form.filter(chosen_service)
+            return render(request, "user_page/statistics.html", {'form': form})
+        else:
+            form = StatisticsForm(current_user, request.POST)
+            if not form.is_valid():
+                print(form.errors)
+    form = StatisticsForm(current_user)
+
+    selectStats = '''select uss.label as serviceName, usd.label as dnsName, usl.country, usr.result, usr.date, 
+    uss."IP", resp.returned_ip  from user_side_responses usr
+inner join user_side_service uss on usr.service_id = uss.id
+inner join user_side_dns usd on usr.dns_id = usd.id
+inner join user_side_vpn usv on usr.vpn_id = usv.id
+inner join user_side_location usl on usv.location_id = usl.id
+left join user_side_response resp on usr.id = resp.responses_id
+where uss.label like '%''' + chosen_service + "%'" + " order by usr.date desc;"
+
+
+    cur = getStats(selectStats)
+    data_table = []
+    error_count = 0
+    success_count = 0
+    failure_count = 0
+
+    for row in cur:
+        service_ip = row[5]
+        returned_ip = row[6] if row[6] else ''
+        result = row[3]
+        if result == 'successful' and service_ip != returned_ip:
+            result = 'wrong IP          expected: ' + service_ip + '          got: ' + returned_ip
+
+        data_table.append({'service_name': row[0], 'dns_name': row[1], 'vpn_country': row[2], 'result': result,
+                          'date': row[4]})
+        if result == 'successful':
             success_count += 1
         elif row[3] in 'no reponse,internal failure: out of memory,internal failure: vpn_connection_failure,internal failure: process_crash':
             failure_count += 1
