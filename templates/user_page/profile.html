@@ -20,14 +20,27 @@
                 <p class="profile-usertitle-name"> {{ username }} </p>
             </div>
         </div>
-        <div style="width: 400px; margin-top: 50px; padding-left: 80px;
+        <div style="width: 500px; margin-top: 50px; padding-left: 80px;
         padding-top: 50 px">
             <p style="font-weight: bold; font-size: 20px">Password change:</p>
-            <form method="POST" action="" style="font-size:17px">
-                {% csrf_token %}
-                {{ form }}
-                <div class="d-flex justify-content-center mt-3 login_container">
-                    <button class="btn btn-lg btn-primary btn-block" type="submit">Change password</button>
+            <form method="POST">
+                    {{form.non_field_errors}}
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="flex-container-column">
+                            <label class="h3 mb-3 font-weight-normal" style="font-size: 17px">
+                                {{field.label_tag}}
+                            </label>
+                            <div class="h3 mb-3 font-weight-normal">
+                                {{ field }}
+                            </div>
+                            {% if field.errors %}
+                                {{ field.errors }}
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                <div class="d-flex justify-content-right mt-3 login_container">
+                    <button class="btn btn-lg btn-primary btn-block" type="submit" style="width: 300px">Change password</button>
                 </div>
             </form>
         </div>
