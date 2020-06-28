@@ -48,7 +48,7 @@ class Subscription(models.Model):
     end_date = models.DateField()
 
 class Order(models.Model):
-    subscription = models.ForeignKey('Subscription', on_delete=models.DO_NOTHING)
+    subscription = models.ForeignKey('Subscription', on_delete=models.CASCADE)
     date = models.DateField(auto_now_add=True)
     value = models.DecimalField(max_digits=6, decimal_places=2)
     payment_id = models.CharField(max_length=20)

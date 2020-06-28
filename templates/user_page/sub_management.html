@@ -1,0 +1,63 @@
+{% extends "user_page/base.html" %}
+{%  load static %}
+
+{% block header %}
+    <link rel="stylesheet" type="text/css" href="{% static 'user_profile.css' %}">
+{% endblock %}
+
+{% block sidebar %}
+    <li class="nav-item"><a class="nav-link" href="{% url 'user page' %}">Home</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'user profile' %}">Profile</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'user statistics' %}">Statistics</a></li>
+    <li class="nav-item"><a class="nav-link" href="{% url 'buy subscription' %}">Buy subscription</a></li>
+    <li class="nav-item"><a class="nav-link active" href="{% url 'subscription management' %}">Subscription management</a></li>
+{% endblock %}
+
+{% block content %}
+    <form method="POST" action="">
+        {% csrf_token %}
+    {% for subscription, values in form.user_subscriptions.items %}
+        <div class="home_container">
+            <table>
+                <tr>
+                    <td width=500px>
+                        <table>
+                            <tr>
+                                <h1> {{ subscription.service.label }}</h1>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: normal;"><p>Start date:</p></td>
+                                <td style="font-weight: normal;"><p style="margin-left: 40px;">{{  subscription.start_date }}</p></td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: normal;"><p>End date:</p></td>
+                                <td style="font-weight: normal;"><p style="margin-left: 40px; white-space: pre">{{  subscription.end_date }}</p></td>
+                            </tr>
+                            <tr>
+                                <td><button class="btn btn-dark" name="delete_sub_{{subscription.id}}" type="submit">cancel subscription</button></td>
+                            </tr>
+                        </table>
+                    </td>
+                    <td width="50%">
+                        <table>
+                            <tr>
+                                {%  if values %}
+                                <td style="font-weight: normal;"><p>Users with access:</p>
+                                    <ul style="line-height:200%">
+                                        {% for other_subscription in values %}
+                                            <li> {{ other_subscription.user }}
+                                            <button class="btn btn-sm btn-dark" name="delete_usr_{{subscription.service_id}}_{{other_subscription.user_id}}" type="submit">delete</button>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                                {% endif %}
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    {% endfor %}
+    </form>
+{% endblock %}

@@ -8,6 +8,20 @@ class ChangePasswordForm(forms.Form):
     password2 = forms.CharField(label='confirm new password', max_length=25)
 
 
+class SubscriptionManagementForm(forms.Form):
+    def __init__(self, user, *args, **kwargs):
+        super(SubscriptionManagementForm, self).__init__(*args, **kwargs)
+        self.user = user
+        self.user_subscriptions = self.get_subscriptions()
+
+    def get_subscriptions(self):
+        subscriptions = Subscription.objects.filter(user_id=self.user).order_by('service__label')
+        subscriptions_dict = dict()
+        for sub in subscriptions:
+            subscriptions_dict[sub] = Subscription.objects.filter(service_id=sub.service_id).exclude(user_id=self.user).order_by('service__label')
+        return subscriptions_dict
+
+
 class StatisticsForm(forms.Form):
     service_choice = forms.ChoiceField(required=False, widget=forms.Select(attrs={'class': 'custom-select d-block w-100', 'id': 'service_label'}))
 
@@ -82,6 +96,7 @@ class SubscriptionForm2(forms.Form):
 
     def clear(self):
         self.user_dns_set.clear()
+
 
 class SubscriptionForm3(forms.Form):
     title = '{:30.25} {:30.25}'.format('CONTINENT', 'COUNTRY')

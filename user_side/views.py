@@ -5,7 +5,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from .models import Subscription, Responses, Response, Service, Order, DNS, Queries, VPN
-from .forms import SubscriptionForm1, SubscriptionForm2, SubscriptionForm3, SubscriptionForm5, SubscriptionForm4, StatisticsForm, ChangePasswordForm
+from .forms import SubscriptionForm1, SubscriptionForm2, SubscriptionForm3, SubscriptionForm5, SubscriptionForm4, StatisticsForm, ChangePasswordForm, SubscriptionManagementForm
 
 
 # Create your views here.
@@ -114,43 +114,43 @@ where uss.label like '%''' + chosen_service + "%';"
                                                          'error_count': error_count})
 
 
-def statistics_view(request, *args, **kwargs):
-    if not request.user.is_authenticated:
-        return render(request, 'user_page/403.html')
-
-    current_user = request.user
-    services = []
-
-    subscriptions = Subscription.objects.filter(user_id=current_user, end_date__gte=datetime.now())
-    for subscription in subscriptions:
-        services.append(subscription.service)
-    if services:
-        chosen_service = services[0].label
-    else:
-        chosen_service = None
-
-    if request.method == 'POST':
-        if 'filter' in request.POST:
-            chosen_service = request.POST.get('service_choice')
-            form = StatisticsForm(current_user, request.POST)
-            form.filter(chosen_service)
-            data_table, success_count, failure_count, error_count = get_statistics_data(chosen_service)
-
-            return render(request, "user_page/statistics.html", {'form': form, 'data_table': data_table,
-                                                                 'success_count': success_count, 'failure_count': failure_count,
-                                                                 'error_count': error_count})
-
-        else:
-            form = StatisticsForm(current_user, request.POST)
-            if not form.is_valid():
-                print(form.errors)
-    form = StatisticsForm(current_user)
-
-    data_table, success_count, failure_count, error_count = get_statistics_data(chosen_service)
-
-    return render(request, "user_page/statistics.html", {'form': form, 'data_table': data_table,
-                                                         'success_count': success_count, 'failure_count': failure_count,
-                                                         'error_count': error_count})
+# def statistics_view(request, *args, **kwargs):
+#     if not request.user.is_authenticated:
+#         return render(request, 'user_page/403.html')
+#
+#     current_user = request.user
+#     services = []
+#
+#     subscriptions = Subscription.objects.filter(user_id=current_user, end_date__gte=datetime.now())
+#     for subscription in subscriptions:
+#         services.append(subscription.service)
+#     if services:
+#         chosen_service = services[0].label
+#     else:
+#         chosen_service = None
+#
+#     if request.method == 'POST':
+#         if 'filter' in request.POST:
+#             chosen_service = request.POST.get('service_choice')
+#             form = StatisticsForm(current_user, request.POST)
+#             form.filter(chosen_service)
+#             data_table, success_count, failure_count, error_count = get_statistics_data(chosen_service)
+#
+#             return render(request, "user_page/statistics.html", {'form': form, 'data_table': data_table,
+#                                                                  'success_count': success_count, 'failure_count': failure_count,
+#                                                                  'error_count': error_count})
+#
+#         else:
+#             form = StatisticsForm(current_user, request.POST)
+#             if not form.is_valid():
+#                 print(form.errors)
+#     form = StatisticsForm(current_user)
+#
+#     data_table, success_count, failure_count, error_count = get_statistics_data(chosen_service)
+#
+#     return render(request, "user_page/statistics.html", {'form': form, 'data_table': data_table,
+#                                                          'success_count': success_count, 'failure_count': failure_count,
+#                                                          'error_count': error_count})
 
 
 def get_statistics_data(chosen_service):
@@ -191,6 +191,7 @@ def get_statistics_data(chosen_service):
 
     return (data_table, success_count, failure_count, error_count)
 
+
 def buy_subscription_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
         return render(request, 'user_page/403.html')
@@ -199,6 +200,27 @@ def buy_subscription_view(request, *args, **kwargs):
 
 def error_view(request, *args, **kwargs):
     return render(request, "user_page/403.html", {})
+
+
+def subscription_management_view(request, *args, **kwargs):
+    if not request.user.is_authenticated:
+        return render(request, 'user_page/403.html')
+
+    current_user = request.user
+
+    if request.method == 'POST':
+        for key, value in request.POST.items():
+            if key.startswith('delete_sub'):
+                sub_id = int(key.replace('delete_sub_', ''))
+                Subscription.objects.filter(user_id=current_user, id=sub_id).delete()
+            if key.startswith('delete_usr'):
+                serv_id, usr_id = key.replace('delete_usr_', '').split('_')
+                serv_id = int(serv_id)
+                usr_id = int(usr_id)
+                Subscription.objects.filter(user_id=usr_id, service_id=serv_id).delete()
+
+    form = SubscriptionManagementForm(current_user, request.POST)
+    return render(request, "user_page/sub_management.html", {'form': form})
 
 
 def buy_subscription_form_1_view(request, *args, **kwargs):
