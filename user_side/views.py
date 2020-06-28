@@ -1,7 +1,9 @@
 import hashlib
 from datetime import datetime
 import psycopg2
-from django.http import HttpResponseRedirect
+from django.contrib import messages
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from .models import Subscription, Responses, Response, Service, Order, DNS, Queries, VPN
@@ -50,17 +52,21 @@ def home_page_view(request, *args, **kwargs):
 def profile_view(request, *args, **kwargs):
     if not request.user.is_authenticated:
         return render(request, 'user_page/403.html')
-
     username = request.user.username
 
     if request.method == 'POST':
-        form = ChangePasswordForm(request.POST)
+        form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
-            return HttpResponseRedirect('/password changed/')
+            user = form.save()
+            update_session_auth_hash(request, user)  # Important!
+            messages.success(request, 'Your password was successfully updated!')
+            return redirect('user profile')
+        else:
+            messages.error(request, 'Please correct the error below.')
     else:
-        form = ChangePasswordForm()
+        form = PasswordChangeForm(request.user)
 
-    return render(request, "user_page/profile.html", {'username': username})
+    return render(request, "user_page/profile.html", {'form': form, 'username': username})
 
 
 def statistics_view(request, *args, **kwargs):

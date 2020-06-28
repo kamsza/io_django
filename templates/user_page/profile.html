@@ -18,22 +18,30 @@
         <div class="flex-container-column">
             <div class="profile-userpic" style="margin: auto">
                 <img src="https://image.flaticon.com/icons/svg/21/21104.svg" class="img-responsive" alt="">
-            </div>
-            <div class="profile-usertitle-name" style="margin-top: 0px">
-                {{ username }}
+                <p class="profile-usertitle-name"> {{ username }} </p>
             </div>
         </div>
-        <div style="width: 400px; margin-left: 100 px; margin-bottom: 80px; margin-top: 100px; padding-left: 50px;
+        <div style="width: 500px; margin-top: 50px; padding-left: 80px;
         padding-top: 50 px">
-            <form method="POST" action="">
-                {% csrf_token %}
-                <label class="h3 mb-3 font-weight-normal" style="font-size: 15px" for="new password">New password</label>
-                <input class="form-control"  id="new password" type="text" name="new password" maxlength="30" required>
-                <label class="h3 mb-3 font-weight-normal" style="font-size: 15px" for="confirm new password">Confirm new password</label>
-                <input class="form-control"  id="confirm new password" type="text" name="confirm new password" maxlength="30" required>
-
-                <div class="d-flex justify-content-center mt-3 login_container">
-                    <button class="btn btn-lg btn-primary btn-block" type="submit">Change password</button>
+            <p style="font-weight: bold; font-size: 20px">Password change:</p>
+            <form method="POST">
+                    {{form.non_field_errors}}
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="flex-container-column">
+                            <label class="h3 mb-3 font-weight-normal" style="font-size: 17px">
+                                {{field.label_tag}}
+                            </label>
+                            <div class="h3 mb-3 font-weight-normal">
+                                {{ field }}
+                            </div>
+                            {% if field.errors %}
+                                {{ field.errors }}
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                <div class="d-flex justify-content-right mt-3 login_container">
+                    <button class="btn btn-lg btn-primary btn-block" type="submit" style="width: 300px">Change password</button>
                 </div>
             </form>
         </div>
