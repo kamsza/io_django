@@ -79,7 +79,8 @@ def statistics_view(request, *args, **kwargs):
     subscriptions = Subscription.objects.filter(user_id=current_user, end_date__gte=datetime.now())
     for subscription in subscriptions:
         services.append(subscription.service)
-    chosen_service = services[0].label
+
+    chosen_service = services[0].label if services else 'NO SERVICES'
 
     if request.method == 'POST':
         if 'filter' in request.POST:
