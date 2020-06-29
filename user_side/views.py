@@ -1,5 +1,5 @@
 import hashlib
-from datetime import datetime
+from datetime import datetime, timedelta
 import psycopg2
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
@@ -120,45 +120,6 @@ where uss.label like '%''' + chosen_service + "%';"
                                                          'error_count': error_count})
 
 
-# def statistics_view(request, *args, **kwargs):
-#     if not request.user.is_authenticated:
-#         return render(request, 'user_page/403.html')
-#
-#     current_user = request.user
-#     services = []
-#
-#     subscriptions = Subscription.objects.filter(user_id=current_user, end_date__gte=datetime.now())
-#     for subscription in subscriptions:
-#         services.append(subscription.service)
-#     if services:
-#         chosen_service = services[0].label
-#     else:
-#         chosen_service = None
-#
-#     if request.method == 'POST':
-#         if 'filter' in request.POST:
-#             chosen_service = request.POST.get('service_choice')
-#             form = StatisticsForm(current_user, request.POST)
-#             form.filter(chosen_service)
-#             data_table, success_count, failure_count, error_count = get_statistics_data(chosen_service)
-#
-#             return render(request, "user_page/statistics.html", {'form': form, 'data_table': data_table,
-#                                                                  'success_count': success_count, 'failure_count': failure_count,
-#                                                                  'error_count': error_count})
-#
-#         else:
-#             form = StatisticsForm(current_user, request.POST)
-#             if not form.is_valid():
-#                 print(form.errors)
-#     form = StatisticsForm(current_user)
-#
-#     data_table, success_count, failure_count, error_count = get_statistics_data(chosen_service)
-#
-#     return render(request, "user_page/statistics.html", {'form': form, 'data_table': data_table,
-#                                                          'success_count': success_count, 'failure_count': failure_count,
-#                                                          'error_count': error_count})
-
-
 def get_statistics_data(chosen_service):
     if not chosen_service:
         return ([],0,0,0)
@@ -198,12 +159,6 @@ def get_statistics_data(chosen_service):
     return (data_table, success_count, failure_count, error_count)
 
 
-def buy_subscription_view(request, *args, **kwargs):
-    if not request.user.is_authenticated:
-        return render(request, 'user_page/403.html')
-    return render(request, "user_page/buy_subscription.html", {})
-
-
 def error_view(request, *args, **kwargs):
     return render(request, "user_page/403.html", {})
 
@@ -224,9 +179,28 @@ def subscription_management_view(request, *args, **kwargs):
                 serv_id = int(serv_id)
                 usr_id = int(usr_id)
                 Subscription.objects.filter(user_id=usr_id, service_id=serv_id).delete()
-
+            if key.startswith('email') and value:
+                sub_id = int(key.replace('email_', ''))
+                email = value
+                subscription = Subscription.objects.filter(id=sub_id)
+                user = User.objects.filter(email=email)
+                if subscription and user:
+                    subscription = subscription[0]
+                    user = user[0]
+                    existing_subscription = Subscription.objects.filter(user_id=user, service_id=subscription.service_id,
+                                                                        start_date=subscription.start_date)
+                    if not existing_subscription:
+                        sub = Subscription(user=user, service=subscription.service, start_date=subscription.start_date, end_date=subscription.end_date,
+                                           admin=False)
+                        sub.save()
     form = SubscriptionManagementForm(current_user, request.POST)
     return render(request, "user_page/sub_management.html", {'form': form})
+
+
+def buy_subscription_view(request, *args, **kwargs):
+    if not request.user.is_authenticated:
+        return render(request, 'user_page/403.html')
+    return render(request, "user_page/buy_subscription.html", {})
 
 
 def buy_subscription_form_1_view(request, *args, **kwargs):
@@ -384,10 +358,10 @@ def create_order(subscription, payment_id):
     order.save()
 
 def create_subscriptions(curr_user, users_ids, service):
-    sub = Subscription(user=curr_user, service=service, start_date=datetime.now(), end_date=datetime.fromtimestamp(1608137809))
+    sub = Subscription(user=curr_user, service=service, start_date=datetime.now(), end_date=datetime.now() + timedelta(days=365), admin=True)
     sub.save()
     for user_id in users_ids:
-        x_sub = Subscription(user_id=user_id, service=service, start_date=datetime.now(), end_date=datetime.fromtimestamp(1608137809))
+        x_sub = Subscription(user_id=user_id, service=service, start_date=datetime.now(), end_date=datetime.now() + timedelta(days=365), admin=False)
         x_sub.save()
     return sub
 

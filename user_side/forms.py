@@ -9,6 +9,11 @@ class ChangePasswordForm(forms.Form):
 
 
 class SubscriptionManagementForm(forms.Form):
+    email = forms.EmailField(max_length=40,
+                                required=False,
+                                widget=forms.TextInput(
+                                attrs={'class': 'form-control', 'placeholder': 'Enter email', 'id': 'email'}))
+
     def __init__(self, user, *args, **kwargs):
         super(SubscriptionManagementForm, self).__init__(*args, **kwargs)
         self.user = user

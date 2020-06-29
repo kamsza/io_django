@@ -46,6 +46,7 @@ class Subscription(models.Model):
     service = models.ForeignKey('Service', on_delete=models.CASCADE)
     start_date = models.DateField(auto_now_add=True)
     end_date = models.DateField()
+    admin = models.BooleanField()
 
 class Order(models.Model):
     subscription = models.ForeignKey('Subscription', on_delete=models.CASCADE)

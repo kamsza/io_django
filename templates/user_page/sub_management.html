@@ -41,7 +41,7 @@
                     <td width="50%">
                         <table>
                             <tr>
-                                {%  if values %}
+                                {%  if subscription.admin %}
                                 <td style="font-weight: normal;"><p>Users with access:</p>
                                     <ul style="line-height:200%">
                                         {% for other_subscription in values %}
@@ -49,6 +49,16 @@
                                             <button class="btn btn-sm btn-dark" name="delete_usr_{{subscription.service_id}}_{{other_subscription.user_id}}" type="submit">delete</button>
                                             </li>
                                         {% endfor %}
+                                        &nbsp;
+                                        <div class="row" style="margin-left: -50px">
+                                            <div class="col-md-8 mb-3">
+{#                                                {{ form.email }}#}
+                                            <input type="email" class="form-control" name="email_{{subscription.id}}" placeholder="Enter email">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                            <button class="btn btn-sm btn-dark" name="add_usr_{{subscription.service_id}}_{{other_subscription.user_id}}" type="submit">add</button>
+                                            </div>
+                                        </div>
                                     </ul>
                                 </td>
                                 {% endif %}
