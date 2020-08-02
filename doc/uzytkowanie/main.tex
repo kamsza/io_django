@@ -1,0 +1,367 @@
+\documentclass{hitec}
+\usepackage{polski}
+\usepackage[utf8]{inputenc}
+\usepackage{url}
+\usepackage{xcolor}
+\usepackage[ampersand]{easylist}
+\newcommand{\dir}[1] {\texttt{\color{teal}  \detokenize{#1}}}
+\definecolor{orange}{rgb}{1,0.5,0}
+\newcommand{\file}[1] {\texttt{\color{orange} \detokenize{#1}}}
+\newcommand{\filepath}[1] {\texttt{\color{violet} \detokenize{#1}}}
+\author{Mateusz Bielesz, Wojciech Kosior, Marek Moryl, Kamil Szarek}
+\title{Użytkowanie 0TDNS}
+\begin{document}
+\maketitle
+
+\begin{sloppypar}
+
+Przykłady komend konsolowych w niniejszym dokumencie idą za konwencją, wg.
+której komenda wykonywana jako użytkownik root poprzedzona jest znakiem '\#',
+a komenda wykonywana jako inny użytkownik - znakiem '\$'.
+
+\section{Wymagania części back-endowej systermu}
+\subsection{System}
+Ze względu na użycie linuksowych przestrzeni nazw, back-end 0tdns działa obecnie
+wyłącznie pod systemami z rodziny GNU/Linux.
+
+Dodatkowo, konieczne jest wsparcie jądra dla przekazywanie pakietów IP
+(forwarding), sieciowych przestrzeni nazw (namespace'ów), iptables i urządzeń
+tun.
+
+\subsection{Zależności}
+\begin{enumerate}
+\item cron (w dużej części dystrybucji automatycznie zainstalowany)
+\item libunbound z bindingiem do pythona3; w rodzinie Debiana możliwy do
+  zainstalowania przez
+\begin{verbatim}
+# apt install python3-unbound
+\end{verbatim}
+\item python3 (system był tworzony pod pythonem 3.5.3)
+\item openvpn; w rodzinie Debiana możliwy do zainstalowania przez
+\begin{verbatim}
+# apt install openvpn
+\end{verbatim}
+\item iptables; w rodzinie Debiana możliwe do zainstalowania przez
+\begin{verbatim}
+# apt install iptables
+\end{verbatim}
+\end{enumerate}
+
+\subsection{Uwagi}
+Skrypty systemu są uruchamiane cyklicznie przez demona crona. Aby system
+działał, musi być uruchomiony demon crona. Najskuteczniejszym rozwiązaniem jest
+uruchamianie crond przy starcie systemu (w niektórych dystrybucjach,
+w szczególności tych z rodziny Debiana, domyślnie włączone).
+
+\section{Instalacja części back-endowej}
+\subsection{Pobranie systemu}
+W celu zainstalowania systemu klonujemy repozytorium: \url{https://repo.or.cz/0tDNS.git}
+\begin{verbatim}
+$ git clone https://repo.or.cz/0tDNS.git && cd 0tdns
+\end{verbatim}
+
+\subsection{Instalacja plików wchodzących w skład systemu}
+Wykonujemy jako użytkownik root: 
+
+\begin{verbatim}
+# ./install.sh
+\end{verbatim}
+
+Skrypt \file{install.sh} przekopiowuje do \dir{/var/lib/0tdns/}
+oraz do \dir{/usr/sbin/} i \dir{/usr/bin/} skrypty wchodzące w skład systemu.
+
+Oprócz tego \file{install.sh} umieszcza importowany przez inne skrypty
+\file{ztdnslib.py} w \dir{/usr/lib/python3/dist-packages/}
+oraz kopiuje \file{db_connection_config.yml} do katalogu \dir{/etc/0tdns/}.
+
+Przy wywołaniu \file{install.sh} można ustawić odpowiednią zmienną środowiskową
+
+\begin{verbatim}
+$ INSTALL_ROOT=/some/path/ ./install.sh
+\end{verbatim}
+
+lub podać argument do skryptu
+
+\begin{verbatim}
+$ ./install.sh /some/path/
+\end{verbatim}
+
+Efekt jest w obu przypadkach taki sam - wszystkie pliki zostaną
+zainstalowane w \dir{/some/path/}, co może zostać wykorzystane do instalacji
+wewnątrz chroot'a lub do stworzenia pakietu dystrybucji.
+
+\subsection{Automatyczna część konfiguracji systemu}
+Po instalacji plików w systemie konieczne jest utworzenie użytkownika 0tdns
+i dodanie wpisów do crontaba, co wykonać można wywołaniem skryptu
+
+\begin{verbatim}
+# ./setup.sh
+\end{verbatim}
+
+Funkcjonalność \file{setup.sh} i \file{install.sh} została rozdzielona
+z myślą o dystrybucji systemu.
+
+\subsection{Ładowanie niezbędnych modułów jądra}
+Dla działania systemu potrzebne są sterowniki tun i ip\_tables.
+W zależności od dystrybucji mogą one być wbudowane w jądro lub dostarczone
+w postaci modułów. W tym drugim przypadku konieczne jest załadowanie modułów:
+
+\begin{verbatim}
+# modprobe tun
+# modprobe ip_tables
+\end{verbatim}
+
+Tak załadowany moduł działa do momentu ponownego uruchomienia systemu
+operacyjnego. Aby moduły były automatycznie ładowane przy starcie, należy wpisać
+je do odpowiedniego pliku konfiguracyjnego:
+
+\begin{verbatim}
+# echo tun >> /etc/modules
+# echo ip_tables >> /etc/modules
+\end{verbatim}
+
+\subsection{Włączenie przekierowywania pakietów}
+Aby 0tdns działał, jądro musi przekazywać pakiety IP z domyślnego urządzenia
+sieciowego na urządzenia veth, które będą tworzone (za włączenie przekazywania
+pakietów w drugą stronę - od urządzenia veth - odpowiadają skrypty systemu).
+Ta funkcjonalność jest domyślnie wyłączona w przypadku większości dustrubucji.
+Jeśli dane jądro ją wspiera, można ją włączyć poprzez zapis do odpowiedniego
+pliku w systemie plików \filepath{/proc}.
+
+\begin{verbatim}
+# echo 1 > /proc/sys/net/ipv4/conf/all/forwarding
+\end{verbatim}
+
+Powyższy przykład pokazuje, jak włączyć przekazywanie ruchu ze wszystkich
+urządzeń. Znając nasze główne urządzenie (tj. to łączące nas z siecią internet),
+możemy włączyć przekazywanie jedynie pakietów przychodzących z niego.
+Przykładowo, jeśli tym urządzeniem jest eth0:
+
+\begin{verbatim}
+# echo 1 > /proc/sys/net/ipv4/conf/eth0/forwarding
+\end{verbatim}
+
+Tak wprowadzona zmiana nie jest jednak persystentna ze względu na ponowne
+uruchomienia systemu operacyjnego. Aby tak się stało, należy zmodyfikować
+odpowiedni plik konfiguracyjny:
+
+\begin{verbatim}
+# echo 'net.ipv4.conf.eth0.forwarding=1' >> /etc/sysctl.conf
+\end{verbatim}
+
+\subsection{Uzupełnienie pliku konfiguracyjnego}
+Programy działające w ramach systemu automatycznie sukają konfiguracji
+systemu pod \filepath{/etc/0tdns/db_connection_config.yml}. Dostarczony plik
+jest domyślną konfiguracją, którą administrator systemu powinien zmodyfikować
+precyzując w niej adekwatny adres bazy danych i inne parametry zgodnie
+ze specyfikacją w rozdziale poniżej.
+
+\section{Konfiguracja części back-endowej} \label{config}
+Konfiguracja systemu odbywa się poprzez plik
+\filepath{/etc/0tdns/db_connection_config.yml}. Domyślna, wymagająca
+uzupełnienia konfiguracja, jest dostarczona z systemem.
+
+Wykorzystany jest tu format yaml. Możliwe jest dodawanie komentarzy
+zaczynających się od znaku '\#'.
+
+Poniżej wyjaśnione jest znaczenie poszczególnych zmiennych w pliku
+konfiguracyjnym.
+
+\subsection{Zmienna user}
+Zawiera nazwę używanego użytkownika (roli) w bazie danych. Nazwa może - choć
+jeśli nie zawiera znaków specjalnych, to nie musi - być zamknięta w cudzysłów.
+
+Przykład:
+\begin{verbatim}
+user: postgres
+\end{verbatim}
+
+\subsection{Zmienna password}
+Zawiera hasło do bazy podanego w zmiennej user użytkownika. Nazwa może - choć
+jeśli nie zawiera znaków specjalnych, to nie musi - być zamknięta w cudzysłów.
+
+Przykład:
+\begin{verbatim}
+password: postgres
+\end{verbatim}
+
+\subsection{Zmienna host}
+Zawiera adres bazy danch. Może to być zarówno nazwa domenowa, jak i adres IP.
+
+Przykład:
+\begin{verbatim}
+host: "127.0.0.1"
+\end{verbatim}
+
+\subsection{Zmienna port}
+Zawiera port, na którym należy łączyć się z bazą danych. Port może, choć nie
+musi, być wzięty w cudzysłów.
+
+Przykład:
+\begin{verbatim}
+port: "5432"
+\end{verbatim}
+
+\subsection{Zmienna database}
+Zawiera nazwę używanej bazy w systemie bazodanowym. Nazwa może - choć jeśli nie
+zawiera znaków specjalnych, to nie musi - być zamknięta w cudzysłów.
+
+Przykład:
+\begin{verbatim}
+database: "ztdns"
+\end{verbatim}
+
+\subsection{Zmienna enabled}
+Precyzuje, czy instancja back-endu ma pracować. Jeśli zmienna ustawiona jest na
+``yes'' - system działa normalnie i cogodzinnie wykonywane są zapytania. Jeśli
+ustawiona jest na ``no'' - system jest wyłączony.
+
+Dzięki tej zmiennej możliwe jest czasowe wyłączenie danej instancji systemu,
+np. w wypadku awarii. W dostarczonym szablonie pliku konfiguracyjnego system
+nie jest włączony.
+
+Wartość zmiennej może - choć nie musi - buć wzięta w cudzysłów.
+
+Przykłady:
+\begin{verbatim}
+enabled: no
+\end{verbatim}
+\begin{verbatim}
+enabled: "yes"
+\end{verbatim}
+
+\subsection{Zmienna handled\_vpns}
+Ma ona zawierać listę bazodanowych id serwerów VPN, które ta instancja back-endu
+ma obsługiwać. Tym samym możliwe jest rozdzielenia pracy na kilka maszym.
+
+Ta zmienna może pozostać nieustawiona - wtedy dana instancja systemu będzie
+obsługiwała wszystkie połączenia VPN w bazie danych.
+
+W liście mogą się znaleźć także id, które nie występują w bazie danych.
+
+Przykład:
+\begin{verbatim}
+handled_vpns: [1, 2, 17]
+\end{verbatim}
+
+\subsection{Zmienna parallel\_vpns}
+Zmienna, która decyduje o tym, ile połączeń VPN może być zestawionych
+jednocześnie. System w żadnym momencie nie nawiąże więcej połączeń VPN, niż
+wynosi wartość tej zmiennej. Umożliwia to administratorowi kontrolowanie
+obciążenia maszyny i łącza sieciowego.
+
+Zmienna powinna być liczbą, nieotoczoną cudzysłowami.
+
+Przykład:
+\begin{verbatim}
+parallel_vpns: 20
+\end{verbatim}
+
+\subsection{Zmienna private\_addresses}
+Zmienna zawiera listę zakresów adresów IP, które system może nadawać parom
+veth. Format pojedynczego zakresu to
+``{\textless}adres\_ipv4{\textgreater} - {\textless}adres\_ipv4{\textgreater}''.
+Znaki białe naokoło myślnika są
+opcjonalne. Spośród podanych w tej zmiennej zakresów powinno dać się wybrać
+przynajmniej tyle podsieci z maską /30, ile wynosi wartość zmiennej
+parallel\_vpns (niespełnienie tego wymogu objawi się odpowiednimi
+wpsami w logach).
+
+Przykład:
+\begin{verbatim}
+private_addresses: ["10.25.25.0 - 10.25.25.59", "10.25.26.0 - 10.25.26.255"]
+\end{verbatim}
+
+
+\section{Deinstalacja części back-endowej}
+
+W celu odwrócenia zmian dokonanych przez \file{setup.sh} należy wywołać (jako
+root)
+
+\begin{verbatim}
+# ./uninstall.sh
+\end{verbatim}
+
+Jeśli z systemu mają być usunięte także pliki zainstalowane przez skrypt
+\file{install.sh}, można użyć następującej flagi
+
+\begin{verbatim}
+# uninstall.sh --delete-files
+\end{verbatim}
+
+\section{Działanie części back-endowej systemu}
+\subsection{Cogodzinne odytywanie serwerów DNS}
+Demon crona co godzinę uruchamia skrypt \file{hourly.py}, który czyta
+konfigurację \filepath{/etc/0tdns/db_connection_config.yml}, następnie łączy się
+z bazą danych i pobiera z niej id wszystkich serverów VPN, z którymi ma nawiązać
+połączenie w celu odpytywania serwerów DNS.
+
+Dla każdego serwera VPN \file{hourly.py} sprawdza, czy jego plik konfiguracyjny
+znajduje się w systemie. Jeżli nie, jest pobierany z bazy i zapisywany pod
+\dir{/var/lib/0tdns/}.
+
+Przez zestawione połączenia VPN odpytywane są odpowiednie serwery DNS, a wyniki
+są umieszczane w bazie danych.
+
+\subsection{Sprawdzanie zakończenia wykonania}
+Skrypt \file{hourly.py} na początku działania tworzy plik
+\filepath{/var/lib/0tdns/lockfile}, który na końcu działania usuwa. Jeśli plik
+istnieje w systemie, oznacza to, że jakaś instancja \file{hourly.py} pracuje.
+
+Jeśli w momencie rozpoczęcia wykonania \file{hourly.py} plik lockfile istnieje,
+skrypt, aby uniknąć kolizji ze swoją wcześniejszą instancją, zakończy działanie
+bez wykonania zapytań DNS. Ten mechanizm stanowi zabezpieczenie na wypadek
+sytuacji szczególnej, jak np. błąd systemu. W normalnych warunkach
+\file{hourly.py} powinien zakończyć działanie w czasie dużo krótszym, niż
+godzina.
+
+Dodatkowo, 15, 30 i 45 minut po każdej godzine uruchamiany jest przez demon
+crona skrypt \file{check_if_done.py}, który sprawdza, czy plik lockfile istnieje
+i jeśli tak - wykonuje zapis do logów oraz wysyła maila do administratora
+(niezaimplementowane).
+
+Na wypadek nagłego wyłączenia systemu operacyjnego, do crontaba dodawane jest
+polecenie usunięcia pliku lockfile w momencie ponownego uruchomienia.
+
+\subsection{Powiadamienie mailowe}
+O każdej równej godzinie uruchamiany jest skrypt send\_emails,
+który sprawdza w bazie danych, jakie błędne adresy były zwrócone w poprzedniej
+godzinie i wysyła alert do odpowiednich użytkowników.
+
+\subsection{Logi}
+Logi zapisywane są do pliku \filepath{/var/log/0tdns.log}. Znajdują się tam
+oznaczone godziną informacje m.in. o nawiązywanych i nieudanych połączeniach
+VPN, działających zbyt długo instancjach skryptu \file{hourly.py} i błędach
+w podanych w konfiguracji zakresach adresów IP.
+
+\subsection{Zmiany w bazie danych}
+Wraz z wykonaniem zapytań DNS dodawane są do tabeli
+user\_side\_responses oraz ew. user\_side\_response
+wpisy z wynikami. Możliwe wartości pola 'results'
+w user\_side\_responses to:
+\begin{itemize}
+  \item 'successful' - od serwera DNS przyszła odpowiedź, że domena istnieje
+    (jedyny przypadek, kiedy mogą (choć nie muszą) być do tego rekordu dowiązane
+    rekordy w user\_side\_response)
+  \item 'not exists' - serwer DNS twierdzi, że domena nie istnieje
+  \item 'no reponse' - nie przyszła żadna odpowiedż od serwera DNS
+  \item 'DNS error: \textless jaki błąd\textgreater ' - jeśli zwrócony został
+    inny kod błędu, niż powyższe
+  \item 'internal failure: out of memory' - wykorzystywany libunbound zwrócił
+    wartość informującą, że zapytanie DNS się nie powiodło z powodu braku
+    pamięci
+  \item 'internal failure: vpn\_connection\_failure' - nie udało się
+    nawiązać danego połączenia VPN
+  \item 'internal failure: process\_crash' - błąd skryptu
+    wchodzącego w skład systemu
+\end{itemize}
+
+Nie rozróżniamy na tym etapie, czy ip zwrócone zgadzają się z oczekiwanymi.
+
+Razem z dodaniem wpisu innego typu, niż 'internal failure:', zmniejszany
+jest licznik ważności odpowiedniego rekordu w tabeli
+user\_side\_queries lub rekord jest usuwany
+(jeśli licznik osiągnął 0).
+
+\end{sloppypar}
+\end{document}

@@ -1,0 +1,74 @@
+#!/bin/sh
+
+# adapted from
+# https://unix.stackexchange.com/questions/149293/feed-all-traffic-through-openvpn-for-a-specific-network-namespace-only
+
+# vpn_wrapper.sh passes the following variables through openvpn's
+# --setenv option:
+#    NAMESPACE_NAME
+#    WRAPPER_PID
+#    VETH_HOST0
+#    VETH_HOST1
+#    ROUTE_THROUGH_VETH
+#    PHYSICAL_IP
+
+# tag veth names so that they are uniqie between instances of this script
+VETH0=v0tdns${WRAPPER_PID}_0
+VETH1=v0tdns${WRAPPER_PID}_1
+
+case $script_type in
+    up)
+	ip netns add $NAMESPACE_NAME
+        ip netns exec $NAMESPACE_NAME ip link set dev lo up
+        ip link set dev "$1" up netns $NAMESPACE_NAME mtu "$2"
+        ip netns exec $NAMESPACE_NAME ip addr add dev "$1" \
+           "$4/${ifconfig_netmask:-30}" \
+           ${ifconfig_broadcast:+broadcast "$ifconfig_broadcast"}
+        if [ -n "$ifconfig_ipv6_local" ]; then
+            ip netns exec $NAMESPACE_NAME ip addr add dev "$1" \
+               "$ifconfig_ipv6_local"/112
+        fi
+
+	# the following is done to enable some connections to bypass vpn
+	VETH0=v0tdns${WRAPPER_PID}_0
+	VETH1=v0tdns${WRAPPER_PID}_1
+	ip link add $VETH0 type veth peer name $VETH1
+	ip link set $VETH1 netns $NAMESPACE_NAME
+	ip addr add $VETH_HOST0/30 dev $VETH0
+	ip netns exec $NAMESPACE_NAME ip addr add $VETH_HOST1/30 dev $VETH1
+	ip link set $VETH0 up
+	ip netns exec $NAMESPACE_NAME ip link set $VETH1 up
+        ;;
+    route-up)
+	# user is responsible for enabling routing from physical
+	# interface to veth devices, we're enabling the reverse way
+        echo 1 > /proc/sys/net/ipv4/conf/$VETH0/forwarding
+
+	ip netns exec $NAMESPACE_NAME ip route add default \
+	   via "$ifconfig_remote"
+
+        if [ -n "$ifconfig_ipv6_remote" ]; then
+            ip netns exec $NAMESPACE_NAME ip route add default via \
+               "$ifconfig_ipv6_remote"
+        fi
+
+	# here go routes for bypassing vpn
+	for ADDRESS in $ROUTE_THROUGH_VETH; do
+	    ip netns exec $NAMESPACE_NAME ip route add $ADDRESS via $VETH_HOST0
+	    iptables -t nat -A POSTROUTING -s $VETH_HOST1/32 \
+		     -j SNAT --to-source $PHYSICAL_IP
+	done
+
+
+	# notify our sh process, that openvpn finished initializing
+	kill -usr1 $WRAPPER_PID
+        ;;
+    down)
+	for ADDRESS in $ROUTE_THROUGH_VETH; do
+	    iptables -t nat -D POSTROUTING -s $VETH_HOST1/32 \
+		     -j SNAT --to-source $PHYSICAL_IP
+	done
+
+        ip netns delete $NAMESPACE_NAME
+        ;;
+esac

@@ -1,0 +1,10 @@
+user: postgres
+password: postgres
+host: "127.0.0.1"
+port: "5432"
+database: "ztdns"
+enabled: no
+handled_vpns: [1, 2]
+parallel_vpns: 20
+private_addresses: ["10.25.25.0 - 10.25.25.59", "10.25.26.0 - 10.25.26.255"]
+send_user_emails: no

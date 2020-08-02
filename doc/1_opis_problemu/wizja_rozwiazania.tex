@@ -1,0 +1,17 @@
+\section{Wizja rozwiązania}
+
+\subsection{Wstęp}
+
+\hspace{0.5cm} Celem produktu, który chcemy dostarczyć, jest zautomatyzowanie zapytań do różnych serwerów DNS, weryfikacja ich poprawności, oraz w razie wykrycia błędnie zwracanego IP, jak najszybsze powiadomienie użytkownika. Aplikacja ma także działać dla wielu użytkowników jednocześnie. Domyślnie użytkownikiem mogłaby stać się dowolna osoba, która posiada własny serwis internetowy i po wykupieniu subskrypcji byłaby chroniona. 
+
+\subsection{Back-end}
+
+\hspace{0.5cm} Pierwszą część naszego projektu stanowiłby program działający na serwerze, który miałby odpytywać cyklicznie serwery DNS na całym świecie o podane przez klientów strony internetowe. W przypadku stwierdzenia nieprawidłowości byłby on w stanie natychmiast poinformować klienta gdzie wystąpił problem tak, aby ten zdołał jak najszybciej zareagować. Mógłby on współpracować z dowolnym VPNem, podanym przez administratora.
+
+\subsection{Front-end}
+
+\hspace{0.5cm} Dla użytkowników udostępniona zostałaby strona internetowa, która umożliwiałaby im interakcję z nasza aplikacją. Nowi użytkownicy musieliby się najpierw zarejestrować, po czym mieliby możliwość wykupienie subskrypcji. Subskrypcja dotyczyłaby jednego lub kilku serwisów, które byłyby regularnie sprawdzane.
+
+Po ponownym zalogowaniu byłaby dla nich dostępna możliwość zarządzania subskrypcjami, wykupienia dodatkowych, oraz sprawdzenia statystyk. Statystyki dotyczyłyby testów wykonanych dla podanych przez nich serwisów.
+
+Na tej samej stronie mógłby się także zalogować administrator systemu, który miałby dostęp do ustawień oraz listy klientów i wykupionych przez nich subskrypcji.
